@@ -10,7 +10,6 @@ import com.google.firebase.initialize
 import com.kakao.sdk.common.KakaoSdk
 import com.kwon.chosungmarket.di.dataModule
 import com.kwon.chosungmarket.di.domainModule
-import com.kwon.chosungmarket.di.navigationModule
 import com.kwon.chosungmarket.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -41,7 +40,6 @@ class CmApplication : Application() {
             androidContext(this@CmApplication)
             modules(
                 listOf(
-                    navigationModule,
                     viewModelModule,
                     dataModule,
                     domainModule
