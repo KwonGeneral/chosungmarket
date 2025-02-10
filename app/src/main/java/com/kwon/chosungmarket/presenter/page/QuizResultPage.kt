@@ -1,7 +1,13 @@
 package com.kwon.chosungmarket.presenter.page
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -9,32 +15,48 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import com.kwon.chosungmarket.common.utils.KLog
+import com.kwon.chosungmarket.domain.model.QuizResultData
+import com.kwon.chosungmarket.domain.usecase.GetQuizResultUseCase
 import com.kwon.chosungmarket.presenter.route.CmRouter
 import com.kwon.chosungmarket.presenter.widget.FriendlyBody
 import com.kwon.chosungmarket.presenter.widget.FriendlyTitle
 import com.kwon.chosungmarket.presenter.widget.RoundedButton
 import com.kwon.chosungmarket.ui.theme.AppTheme
-import org.koin.androidx.compose.koinViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.kwon.chosungmarket.domain.model.QuizData
-import com.kwon.chosungmarket.domain.model.QuizGroupData
-import com.kwon.chosungmarket.domain.model.QuizResultData
-import com.kwon.chosungmarket.domain.repository.QuizRepositoryImpl
-import com.kwon.chosungmarket.domain.repository.QuizResultRepositoryImpl
-import com.kwon.chosungmarket.domain.usecase.GetQuizResultUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
+/**
+ * 퀴즈 결과 화면을 구성하는 Composable
+ * 점수, 정답/오답 목록, 문제별 상세 결과를 표시합니다.
+ *
+ * @param navController 화면 전환을 위한 네비게이션 컨트롤러
+ * @param quizId 결과를 조회할 퀴즈 결과 ID
+ * @param modifier 레이아웃 수정을 위한 Modifier
+ * @param viewModel 결과 화면의 상태를 관리하는 ViewModel
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizResultPage(
@@ -141,6 +163,14 @@ fun QuizResultPage(
     }
 }
 
+/**
+ * 점수 카드를 구성하는 Composable
+ * 총점, 정답 개수, 격려 메시지를 표시합니다.
+ *
+ * @param score 획득한 점수 (100점 만점)
+ * @param totalQuestions 전체 문제 수
+ * @param correctAnswerList 맞은 문제 수
+ */
 @Composable
 private fun ScoreCard(
     score: Int,
@@ -185,6 +215,12 @@ private fun ScoreCard(
     }
 }
 
+/**
+ * 개별 퀴즈 결과 카드를 구성하는 Composable
+ * 문제, 정답, 사용자 답안, 힌트를 표시합니다.
+ *
+ * @param result 개별 퀴즈의 결과 데이터
+ */
 @Composable
 private fun QuizResultCard(
     result: QuizAnswer,
@@ -286,12 +322,23 @@ private fun QuizResultCard(
     }
 }
 
+/**
+ * 퀴즈 결과 화면의 상태를 관리하는 ViewModel
+ * 결과 데이터 로드와 상세 정보 제공을 처리합니다.
+ *
+ * @param getQuizResultUseCase 퀴즈 결과 조회 UseCase
+ */
 class QuizResultViewModel(
     private val getQuizResultUseCase: GetQuizResultUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<QuizResultState>(QuizResultState.Loading)
     val uiState = _uiState.asStateFlow()
 
+    /**
+     * 퀴즈 결과를 로드하고 점수를 계산합니다.
+     *
+     * @param resultId 조회할 결과 ID
+     */
     fun loadQuizResult(resultId: String) {
         viewModelScope.launch {
             _uiState.value = QuizResultState.Loading
@@ -316,16 +363,41 @@ class QuizResultViewModel(
     }
 }
 
+/**
+ * 퀴즈 결과 화면의 상태를 나타내는 sealed class
+ */
 sealed class QuizResultState {
+    /** 데이터 로딩 중 상태 */
     data object Loading : QuizResultState()
+
+    /**
+     * 결과 로드 성공 상태
+     * @param score 획득한 점수
+     * @param results 문제별 결과 목록
+     * @param resultData 전체 결과 데이터
+     */
     data class Success(
         val score: Int,
         val results: List<QuizAnswer>,
         val resultData: QuizResultData
     ) : QuizResultState()
+
+    /**
+     * 에러 상태
+     * @param message 에러 메시지
+     */
     data class Error(val message: String) : QuizResultState()
 }
 
+/**
+ * 개별 퀴즈 문제의 결과를 담는 데이터 클래스
+ *
+ * @param question 문제 번호 또는 내용
+ * @param correctAnswer 정답
+ * @param userAnswer 사용자가 입력한 답안
+ * @param isCorrect 정답 여부
+ * @param hint 문제의 힌트
+ */
 data class QuizAnswer(
     val question: String,
     val correctAnswer: String,

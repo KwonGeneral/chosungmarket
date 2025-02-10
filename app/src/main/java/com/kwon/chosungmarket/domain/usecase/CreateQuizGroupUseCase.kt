@@ -10,11 +10,24 @@ import com.kwon.chosungmarket.domain.repository.UserRepositoryImpl
 import kotlinx.coroutines.flow.first
 import java.util.UUID
 
+/**
+ * 퀴즈 그룹 생성을 담당하는 UseCase
+ * 퀴즈 문제들을 생성하고 이를 그룹으로 묶어 저장합니다.
+ */
 class CreateQuizGroupUseCase(
     private val quizRepositoryImpl: QuizRepositoryImpl,
     private val sessionRepositoryImpl: SessionRepositoryImpl,
     private val userRepositoryImpl: UserRepositoryImpl
 ) {
+    /**
+     * 새로운 퀴즈 그룹을 생성합니다.
+     *
+     * @param title 퀴즈 그룹 제목
+     * @param description 퀴즈 그룹 설명
+     * @param quizzes 퀴즈 문제 목록
+     * @param difficulty 퀴즈 난이도
+     * @return 생성된 퀴즈 그룹 ID
+     */
     suspend fun invoke(
         title: String,
         description: String,

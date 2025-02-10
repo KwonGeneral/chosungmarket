@@ -2,8 +2,10 @@ package com.kwon.chosungmarket.domain.usecase
 
 import com.kwon.chosungmarket.domain.repository.QuizRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
-import kotlinx.coroutines.flow.first
 
+/**
+ * 퀴즈 좋아요 토글 UseCase
+ */
 class ToggleQuizLikeUseCase(
     private val quizRepositoryImpl: QuizRepositoryImpl,
     private val sessionRepositoryImpl: SessionRepositoryImpl

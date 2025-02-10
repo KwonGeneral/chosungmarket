@@ -4,6 +4,9 @@ import com.kwon.chosungmarket.domain.repository.PersistentStorageRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
 
 
+/**
+ * 로그아웃 처리를 담당하는 UseCase
+ */
 class LogoutUseCase(
     private val sessionRepositoryImpl: SessionRepositoryImpl,
     private val persistentStorageRepositoryImpl: PersistentStorageRepositoryImpl

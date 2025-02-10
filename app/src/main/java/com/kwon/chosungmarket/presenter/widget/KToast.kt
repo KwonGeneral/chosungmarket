@@ -20,27 +20,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.kwon.chosungmarket.presenter.widget.ToastType.ERROR
+import com.kwon.chosungmarket.presenter.widget.ToastType.INFO
+import com.kwon.chosungmarket.presenter.widget.ToastType.SUCCESS
 import com.kwon.chosungmarket.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 
+/**
+ * 토스트 메시지 데이터 클래스
+ *
+ * @param message 표시할 메시지
+ * @param type 토스트 타입 (SUCCESS, ERROR, INFO)
+ */
 data class ToastData(
     val message: String,
     val type: ToastType = ToastType.ERROR
 )
 
+/**
+ * 토스트 타입 열거형
+ *
+ * @property SUCCESS 성공
+ * @property ERROR 에러
+ * @property INFO 정보
+ */
 enum class ToastType {
     SUCCESS,
     ERROR,
     INFO
 }
 
+/**
+ * 앱 전반에서 사용되는 토스트 메시지 시스템
+ */
 object KToast {
     private var toastState: MutableState<ToastData?> = mutableStateOf(null)
 
+    /**
+     * 토스트 메시지를 표시합니다.
+     * @param message 표시할 메시지
+     * @param type 토스트 타입 (SUCCESS, ERROR, INFO)
+     */
     fun show(message: String, type: ToastType = ToastType.ERROR) {
         toastState.value = ToastData(message, type)
     }
 
+    /** 토스트 메시지를 표시하는 Composable */
     @Composable
     fun Toast() {
         val toastData = toastState.value

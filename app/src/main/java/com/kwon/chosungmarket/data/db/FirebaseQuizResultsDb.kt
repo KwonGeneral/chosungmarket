@@ -1,16 +1,20 @@
 package com.kwon.chosungmarket.data.db
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.kwon.chosungmarket.common.utils.KLog
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Firebase의 퀴즈 그룹 데이터에 접근하는 클래스
+ * 각 사용자별로 퀴즈 그룹을 관리합니다.
+ * 경로: userList/{userId}/quizResultList/{quizResultId}
+ */
 class FirebaseQuizResultsDb(
     private val firestore: FirebaseFirestore
 ) {
     private fun getUserQuizResultsCollection(userId: String) =
-        firestore.collection("users")
+        firestore.collection("userList")
             .document(userId)
-            .collection("quizResults")
+            .collection("quizResultList")
 
     suspend fun createQuizResult(userId: String, resultData: Map<String, Any>): String {
         val docRef = getUserQuizResultsCollection(userId)

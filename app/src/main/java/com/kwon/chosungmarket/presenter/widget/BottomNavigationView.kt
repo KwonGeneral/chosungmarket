@@ -34,6 +34,9 @@ import com.kwon.chosungmarket.presenter.route.CmRouter
 import com.kwon.chosungmarket.presenter.route.navigateTo
 import com.kwon.chosungmarket.ui.theme.AppTheme
 
+/**
+ * 하단 네비게이션 바의 각 아이템을 구성하는 Composable
+ */
 @Composable
 fun BottomItem(
     modifier: Modifier = Modifier,
@@ -87,12 +90,18 @@ fun BottomItem(
     }
 }
 
+/**
+ * 하단 네비게이션 바의 아이템 리스트
+ */
 val bottomNavigationList = listOf(
     CmRouter.Home,
     CmRouter.MyInfo,
     CmRouter.Setting,
 )
 
+/**
+ * 앱의 하단 네비게이션 바를 구성하는 Composable
+ */
 @Composable
 fun BottomNavigation(
     nv: NavHostController?,

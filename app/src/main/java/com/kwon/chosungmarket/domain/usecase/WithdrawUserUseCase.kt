@@ -6,6 +6,9 @@ import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.UserRepositoryImpl
 import kotlinx.coroutines.flow.first
 
+/**
+ * 회원 탈퇴 처리를 담당하는 UseCase
+ */
 class WithdrawUserUseCase(
     private val userRepositoryImpl: UserRepositoryImpl,
     private val sessionRepositoryImpl: SessionRepositoryImpl,

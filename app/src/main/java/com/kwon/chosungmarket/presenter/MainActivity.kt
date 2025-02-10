@@ -24,7 +24,6 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.kwon.chosungmarket.common.utils.KLog
 import com.kwon.chosungmarket.presenter.route.AppNavigation
 import com.kwon.chosungmarket.presenter.route.CmRouter
 import com.kwon.chosungmarket.presenter.widget.BottomNavigation
@@ -34,8 +33,13 @@ import com.kwon.chosungmarket.ui.theme.AppTheme
 import com.kwon.chosungmarket.ui.theme.ChosungmarketTheme
 import org.koin.java.KoinJavaComponent
 
+/**
+ * 앱의 메인 액티비티
+ * 앱의 전체 UI 구조와 네비게이션을 설정합니다.
+ */
 class MainActivity : ComponentActivity() {
     companion object {
+        /** 액티비티 인스턴스에 대한 전역 참조 */
         var mThis: MainActivity? = null
     }
 
@@ -44,15 +48,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Edge-to-edge 디스플레이 설정
         enableEdgeToEdge()
 
+        // 시스템 바 설정
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = true
             isAppearanceLightNavigationBars = true
         }
 
+        // 화면 방향 설정
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
+        // Koin 스코프 설정
         if (mThis == null) {
             try {
                 KoinJavaComponent.getKoin().createScope<MainActivity>("MainActivity")
@@ -68,6 +76,7 @@ class MainActivity : ComponentActivity() {
             DoubleBackToExit(nv!!)
 
             ChosungmarketTheme {
+                // 메인 UI 구조 설정
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -94,13 +103,16 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Toast overlay
+                    // 토스트 메시지 오버레이
                     KToast.Toast()
                 }
             }
         }
     }
 
+    /**
+     * 뒤로가기 두 번 누르면 앱 종료하는 기능을 구현하는 Composable
+     */
     @Composable
     fun DoubleBackToExit(navController: NavController) {
         val lastBackPressed = remember { mutableLongStateOf(0L) }

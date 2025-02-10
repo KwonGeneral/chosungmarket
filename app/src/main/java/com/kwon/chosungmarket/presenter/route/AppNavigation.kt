@@ -9,7 +9,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.kwon.chosungmarket.common.utils.KLog
 import com.kwon.chosungmarket.presenter.page.HallOfFamePage
 import com.kwon.chosungmarket.presenter.page.HomePage
 import com.kwon.chosungmarket.presenter.page.LoginPage
@@ -21,6 +20,9 @@ import com.kwon.chosungmarket.presenter.page.QuizGamePage
 import com.kwon.chosungmarket.presenter.page.QuizResultPage
 import com.kwon.chosungmarket.presenter.page.SettingPage
 
+/**
+ * 앱의 전체 네비게이션 구조를 정의하는 Composable
+ */
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
@@ -74,6 +76,12 @@ fun AppNavigation(
     }
 }
 
+/**
+ * 네비게이션 확장 함수
+ *
+ * @param destination 이동할 목적지
+ * @param args 이동할 때 전달할 인자
+ */
 fun NavHostController.navigateTo(destination: String, args: Bundle? = null) {
     if (currentDestination?.route != destination) {
         navigate(destination)
@@ -92,6 +100,11 @@ fun NavHostController.navigateTo(destination: String, args: Bundle? = null) {
     }
 }
 
+/**
+ * 네비게이션 확장 함수
+ *
+ * @param destination 이동할 목적지
+ */
 fun NavController.clearNavigateTo(destination: String) {
     if (currentDestination?.route != destination) {
         navigate(destination)

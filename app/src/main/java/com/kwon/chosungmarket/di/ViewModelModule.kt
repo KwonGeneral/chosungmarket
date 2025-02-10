@@ -9,7 +9,12 @@ import com.kwon.chosungmarket.presenter.page.QuizResultViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
+/**
+ * 화면별 ViewModel 의존성을 제공하는 Koin 모듈
+ * 각 페이지의 ViewModel 인스턴스를 관리합니다.
+ */
 val viewModelModule = module {
+    // 각 페이지별 ViewModel 제공
     viewModel { LoginPageViewModel(get()) }
     viewModel { HomePageViewModel(get(), get()) }
     viewModel { QuizCreateViewModel(get()) }

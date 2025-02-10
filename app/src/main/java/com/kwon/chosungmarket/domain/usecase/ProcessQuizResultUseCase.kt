@@ -8,11 +8,22 @@ import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
 import kotlinx.coroutines.flow.first
 import java.util.UUID
 
+/**
+ * 퀴즈 결과 처리를 담당하는 UseCase
+ * 사용자의 답안을 채점하고 결과를 저장합니다.
+ */
 class ProcessQuizResultUseCase(
     private val quizRepositoryImpl: QuizRepositoryImpl,
     private val quizResultRepositoryImpl: QuizResultRepositoryImpl,
     private val sessionRepositoryImpl: SessionRepositoryImpl
 ) {
+    /**
+     * 퀴즈 결과를 처리합니다.
+     *
+     * @param quizGroupId 퀴즈 그룹 ID
+     * @param userAnswerList 사용자가 입력한 답안 목록
+     * @return 생성된 퀴즈 결과 ID
+     */
     suspend fun invoke(quizGroupId: String, userAnswerList: List<String>): Result<String> {
         return try {
             val quizIdList = quizRepositoryImpl.getQuizIdListByQuizGroup(quizGroupId)
@@ -39,6 +50,13 @@ class ProcessQuizResultUseCase(
         }
     }
 
+    /**
+     * 점수를 계산합니다.
+     *
+     * @param correctAnswerList 정답 목록
+     * @param userAnswerList 사용자 답안 목록
+     * @return 100점 만점 기준 점수
+     */
     private fun calculateScore(correctAnswerList: List<String>, userAnswerList: List<String>): Int {
         val correctCount = correctAnswerList.zip(userAnswerList)
             .count { (correct, user) ->

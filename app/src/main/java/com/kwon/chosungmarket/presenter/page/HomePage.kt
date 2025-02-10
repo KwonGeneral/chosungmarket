@@ -2,13 +2,28 @@ package com.kwon.chosungmarket.presenter.page
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,9 +36,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.kwon.chosungmarket.domain.model.QuizGroupData
 import com.kwon.chosungmarket.domain.model.UserData
-import com.kwon.chosungmarket.domain.usecase.GetQuizGroupListUseCase
 import com.kwon.chosungmarket.domain.usecase.GetCurrentUserInfoUseCase
+import com.kwon.chosungmarket.domain.usecase.GetQuizGroupListUseCase
 import com.kwon.chosungmarket.presenter.route.CmRouter
+import com.kwon.chosungmarket.presenter.route.navigateTo
 import com.kwon.chosungmarket.presenter.widget.FriendlyBody
 import com.kwon.chosungmarket.presenter.widget.FriendlyTitle
 import com.kwon.chosungmarket.presenter.widget.RoundedCard
@@ -33,11 +49,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import com.kwon.chosungmarket.presenter.route.navigateTo
 
+/**
+ * 앱의 메인 화면을 구성하는 Composable
+ * 사용자가 생성한 퀴즈 그룹 목록을 표시하고, 새로운 퀴즈 생성 기능을 제공합니다.
+ *
+ * @param navController 화면 전환을 위한 네비게이션 컨트롤러
+ * @param modifier 레이아웃 수정을 위한 Modifier
+ * @param viewModel 화면의 상태를 관리하는 ViewModel
+ */
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomePage(
@@ -77,14 +97,6 @@ fun HomePage(
 //                        }
                         navController.navigateTo(CmRouter.QuizDetail.createRoute(quizGroupId))
                     },
-                    onCreateQuizClick = {
-//                        navController.navigate(CmRouter.QuizCreate.route) {
-//                            popUpTo(CmRouter.Home.route) {
-//                                inclusive = true
-//                            }
-//                        }
-                        navController.navigateTo(CmRouter.QuizCreate.route)
-                    }
                 )
             }
             is HomeState.Error -> {
@@ -122,11 +134,17 @@ fun HomePage(
     }
 }
 
+/**
+ * 홈 화면의 메인 콘텐츠를 구성하는 Composable
+ * 퀴즈 그룹 목록을 LazyColumn으로 표시합니다.
+ *
+ * @param quizGroups 표시할 퀴즈 그룹 목록
+ * @param onQuizGroupClick 퀴즈 그룹 클릭 시 호출될 콜백
+ */
 @Composable
 private fun HomeContent(
     quizGroups: List<QuizGroupData>,
     onQuizGroupClick: (String) -> Unit,
-    onCreateQuizClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -150,6 +168,13 @@ private fun HomeContent(
     }
 }
 
+/**
+ * 개별 퀴즈 그룹을 카드 형태로 표시하는 Composable
+ * 퀴즈 제목, 설명, 작성자, 좋아요 수 등을 표시합니다.
+ *
+ * @param quizGroup 표시할 퀴즈 그룹 데이터
+ * @param onClick 카드 클릭 시 호출될 콜백
+ */
 @Composable
 private fun QuizGroupCard(
     quizGroup: QuizGroupData,
@@ -205,6 +230,13 @@ private fun QuizGroupCard(
     }
 }
 
+/**
+ * 홈 화면의 상태를 관리하는 ViewModel
+ * 퀴즈 그룹 목록 조회와 새로고침 기능을 제공합니다.
+ *
+ * @param getQuizGroupListUseCase 퀴즈 그룹 목록을 조회하는 UseCase
+ * @param getCurrentUserInfoUseCase 현재 사용자 정보를 조회하는 UseCase
+ */
 class HomePageViewModel(
     private val getQuizGroupListUseCase: GetQuizGroupListUseCase,
     private val getCurrentUserInfoUseCase: GetCurrentUserInfoUseCase
@@ -219,6 +251,7 @@ class HomePageViewModel(
         loadData()
     }
 
+    /** 퀴즈 그룹 목록과 사용자 정보를 로드합니다. */
     private fun loadData() {
         viewModelScope.launch {
             try {
@@ -238,17 +271,38 @@ class HomePageViewModel(
         }
     }
 
+    /**
+     * 데이터를 새로고침합니다.
+     * Pull-to-refresh 동작 시 호출됩니다.
+     */
     fun refresh() {
         _isRefreshing.value = true
         loadData()
     }
 }
 
+/**
+ * 홈 화면의 상태를 나타내는 sealed class
+ */
 sealed class HomeState {
+    /** 데이터 로딩 중 상태 */
     data object Loading : HomeState()
+
+    /**
+     * 데이터 로드 성공 상태
+     *
+     * @param user 현재 로그인한 사용자 정보
+     * @param quizGroups 로드된 퀴즈 그룹 목록
+     */
     data class Success(
         val user: UserData?,
         val quizGroups: List<QuizGroupData>
     ) : HomeState()
+
+    /**
+     * 에러 상태
+     *
+     * @param message 에러 메시지
+     */
     data class Error(val message: String) : HomeState()
 }

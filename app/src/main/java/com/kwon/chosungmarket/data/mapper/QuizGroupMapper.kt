@@ -3,6 +3,9 @@ package com.kwon.chosungmarket.data.mapper
 import com.kwon.chosungmarket.common.types.QuizGroupStatus
 import com.kwon.chosungmarket.domain.model.QuizGroupData
 
+/**
+ * 퀴즈 그룹 데이터를 Firestore 데이터로 변환하는 클래스
+ */
 object QuizGroupMapper {
     fun toFirestore(quizGroupData: QuizGroupData): Map<String, Any> = mapOf(
         "userId" to quizGroupData.userId,

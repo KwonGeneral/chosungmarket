@@ -2,14 +2,17 @@ package com.kwon.chosungmarket.data.db
 
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import com.kwon.chosungmarket.common.utils.KLog
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Firebase의 퀴즈 데이터에 접근하는 클래스
+ */
 class FirebaseQuizDb(
     private val firestore: FirebaseFirestore
 ) {
-    private val quizsCollection = firestore.collection("quizs")
+    private val quizsCollection = firestore.collection("quizList")
 
+    /** 여러 퀴즈 ID로 퀴즈 데이터를 일괄 조회합니다. */
     suspend fun getQuizzesByIdList(quizIdList: List<String>): List<Map<String, Any>> {
         if (quizIdList.isEmpty()) return emptyList()
 
@@ -33,11 +36,13 @@ class FirebaseQuizDb(
         }
     }
 
+    /** 퀴즈 데이터를 생성합니다. */
     suspend fun createQuiz(quizData: Map<String, Any>): String {
         val docRef = quizsCollection.add(quizData).await()
         return docRef.id
     }
 
+    /** 퀴즈 데이터를 조회합니다. */
     suspend fun getQuiz(quizId: String): Map<String, Any>? {
         return quizsCollection.document(quizId).get().await().data
     }

@@ -1,14 +1,34 @@
 package com.kwon.chosungmarket.presenter.page
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,6 +50,15 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.util.UUID
 
+/**
+ * 퀴즈 생성 화면을 구성하는 Composable
+ * 퀴즈 그룹의 제목, 설명, 난이도를 설정하고
+ * 여러 개의 초성 퀴즈를 추가할 수 있습니다.
+ *
+ * @param navController 화면 전환을 위한 네비게이션 컨트롤러
+ * @param modifier 레이아웃 수정을 위한 Modifier
+ * @param viewModel 퀴즈 생성 상태를 관리하는 ViewModel
+ */
 @Composable
 fun QuizCreatePage(
     navController: NavHostController,
@@ -147,6 +176,15 @@ fun QuizCreatePage(
     }
 }
 
+/**
+ * 개별 퀴즈 폼을 나타내는 카드 Composable
+ * 초성, 정답, 힌트를 입력받는 필드들을 포함합니다.
+ *
+ * @param quiz 현재 편집 중인 퀴즈 데이터
+ * @param onQuizUpdate 퀴즈 데이터 업데이트 콜백
+ * @param onDelete 퀴즈 삭제 콜백
+ * @param canDelete 삭제 가능 여부 (최소 1개의 퀴즈는 유지해야 함)
+ */
 @Composable
 private fun QuizFormCard(
     quiz: QuizFormData,
@@ -200,6 +238,12 @@ private fun QuizFormCard(
     }
 }
 
+/**
+ * 퀴즈 생성 화면의 상태를 관리하는 ViewModel
+ * 여러 개의 퀴즈 폼을 관리하고 최종 퀴즈 그룹 생성을 처리합니다.
+ *
+ * @param createQuizGroupUseCase 퀴즈 그룹 생성을 처리하는 UseCase
+ */
 class QuizCreateViewModel(
     private val createQuizGroupUseCase: CreateQuizGroupUseCase
 ) : ViewModel() {
@@ -209,6 +253,11 @@ class QuizCreateViewModel(
     private val _quizzes = MutableStateFlow<List<QuizFormData>>(listOf(QuizFormData()))
     val quizzes = _quizzes.asStateFlow()
 
+    /**
+     * 특정 인덱스의 퀴즈 폼을 업데이트합니다.
+     * @param index 업데이트할 퀴즈의 인덱스
+     * @param form 새로운 퀴즈 데이터
+     */
     fun updateQuizForm(index: Int, form: QuizFormData) {
         val currentList = _quizzes.value.toMutableList()
         if (index < currentList.size) {
@@ -217,12 +266,21 @@ class QuizCreateViewModel(
         }
     }
 
+    /**
+     * 새로운 퀴즈 폼을 추가합니다.
+     */
     fun addQuizForm() {
         val currentList = _quizzes.value.toMutableList()
         currentList.add(QuizFormData())
         _quizzes.value = currentList
     }
 
+    /**
+     * 특정 인덱스의 퀴즈 폼을 삭제합니다.
+     * 최소 1개의 퀴즈는 유지되어야 합니다.
+     *
+     * @param index 삭제할 퀴즈의 인덱스
+     */
     fun removeQuizForm(index: Int) {
         val currentList = _quizzes.value.toMutableList()
         if (currentList.size > 1) {  // 최소 1개의 퀴즈는 유지
@@ -231,6 +289,14 @@ class QuizCreateViewModel(
         }
     }
 
+    /**
+     * 퀴즈 그룹을 생성합니다.
+     * 입력값 검증 후 실제 생성을 수행합니다.
+     *
+     * @param title 퀴즈 그룹 제목
+     * @param description 퀴즈 그룹 설명
+     * @param difficulty 퀴즈 난이도
+     */
     fun createQuizGroup(title: String, description: String, difficulty: QuizDifficulty) {
         viewModelScope.launch {
             try {
@@ -279,13 +345,34 @@ class QuizCreateViewModel(
     }
 }
 
+/**
+ * 퀴즈 생성 화면의 상태를 나타내는 sealed class
+ */
 sealed class QuizCreateState {
+    /** 초기 상태 */
     data object Initial : QuizCreateState()
+
+    /** 퀴즈 그룹 생성 중 상태 */
     data object Loading : QuizCreateState()
+
+    /** 생성 성공 상태 */
     data object Success : QuizCreateState()
+
+    /**
+     * 생성 실패 상태
+     * @param message 실패 사유 메시지
+     */
     data class Error(val message: String) : QuizCreateState()
 }
 
+/**
+ * 퀴즈 폼의 데이터를 담는 데이터 클래스
+ *
+ * @param consonant 초성 문제
+ * @param answer 정답
+ * @param description 힌트 또는 설명
+ * @param tagList 태그 목록
+ */
 data class QuizFormData(
     val consonant: String = "",
     val answer: String = "",

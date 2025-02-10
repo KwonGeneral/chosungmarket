@@ -4,6 +4,9 @@ import com.kwon.chosungmarket.common.types.MedalType
 import com.kwon.chosungmarket.domain.model.MedalData
 import com.kwon.chosungmarket.domain.model.UserData
 
+/**
+ * 사용자 데이터를 Firestore 데이터로 변환하는 클래스
+ */
 object UserMapper {
     fun toFirestore(userData: UserData): Map<String, Any> = mapOf(
         "kakaoId" to userData.kakaoId,

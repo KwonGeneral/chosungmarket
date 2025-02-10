@@ -4,7 +4,14 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,7 +23,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,11 +32,9 @@ import com.kakao.sdk.user.UserApiClient
 import com.kwon.chosungmarket.R
 import com.kwon.chosungmarket.domain.usecase.SignInWithKakaoUseCase
 import com.kwon.chosungmarket.presenter.route.CmRouter
-import com.kwon.chosungmarket.presenter.route.NavigationViewModel
 import com.kwon.chosungmarket.presenter.route.navigateTo
 import com.kwon.chosungmarket.presenter.widget.FriendlyBody
 import com.kwon.chosungmarket.presenter.widget.FriendlyTitle
-import com.kwon.chosungmarket.presenter.widget.RoundedButton
 import com.kwon.chosungmarket.ui.theme.AppTheme
 import com.kwon.chosungmarket.ui.theme.ChosungmarketTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,11 +45,19 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+/**
+ * 로그인 화면을 구성하는 Composable
+ * 카카오 소셜 로그인 기능을 제공합니다.
+ * 로그인 성공 시 홈 화면으로 자동 이동합니다.
+ *
+ * @param navController 화면 전환을 위한 네비게이션 컨트롤러
+ * @param modifier 레이아웃 수정을 위한 Modifier
+ * @param loginViewModel 로그인 상태를 관리하는 ViewModel
+ */
 @Composable
 fun LoginPage(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    navigationViewModel: NavigationViewModel = koinViewModel(),
     loginViewModel: LoginPageViewModel = koinViewModel()
 ) {
     val loginState by loginViewModel.loginState.collectAsState()
@@ -67,6 +79,13 @@ fun LoginPage(
     )
 }
 
+/**
+ * 로그인 화면의 콘텐츠를 구성하는 Composable
+ * 앱 로고, 환영 메시지, 카카오 로그인 버튼을 표시합니다.
+ *
+ * @param loginState 현재 로그인 상태
+ * @param onLoginClick 로그인 버튼 클릭 시 호출될 콜백
+ */
 @Composable
 private fun LoginContent(
     modifier: Modifier = Modifier,
@@ -109,9 +128,9 @@ private fun LoginContent(
                 contentDescription = "카카오 로그인",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(7.5f)  // 카카오 로그인 버튼의 가로:세로 비율
+                    .aspectRatio(7.5f)
                     .clickable(onClick = onLoginClick),
-                contentScale = ContentScale.FillWidth  // 가로 기준으로 비율 유지
+                contentScale = ContentScale.FillWidth
             )
         }
 
@@ -150,25 +169,38 @@ private fun LoginPagePreview() {
     }
 }
 
+/**
+ * 로그인 화면의 상태를 관리하는 ViewModel
+ * 카카오 로그인 프로세스를 처리하고 결과를 관리합니다.
+ *
+ * @param signInWithKakaoUseCase 카카오 로그인을 처리하는 UseCase
+ */
 class LoginPageViewModel(
     private val signInWithKakaoUseCase: SignInWithKakaoUseCase
 ) : ViewModel() {
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Initial)
     val loginState = _loginState.asStateFlow()
 
+    /**
+     * 카카오 로그인을 시도합니다.
+     * 카카오톡 앱이 설치되어 있으면 앱을 통해 로그인하고,
+     * 없으면 웹 브라우저를 통해 로그인합니다.
+     *
+     * @param context 안드로이드 Context
+     */
     fun signInWithKakao(context: Context) {
         viewModelScope.launch {
             try {
                 _loginState.value = LoginState.Loading
 
                 if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
-                    handleKakaoLogin(context) { client, callback ->
+                    handleKakaoLogin() { client, callback ->
                         client.loginWithKakaoTalk(context) { token, error ->
                             callback(token, error)
                         }
                     }
                 } else {
-                    handleKakaoLogin(context) { client, callback ->
+                    handleKakaoLogin() { client, callback ->
                         client.loginWithKakaoAccount(context) { token, error ->
                             callback(token, error)
                         }
@@ -180,8 +212,13 @@ class LoginPageViewModel(
         }
     }
 
+    /**
+     * 카카오 로그인 프로세스를 처리하는 내부 메서드
+     * 로그인 방식(카카오톡/웹)에 따라 적절한 로그인 흐름을 처리합니다.
+     *
+     * @param loginMethod 실제 로그인을 수행할 메서드
+     */
     private suspend fun handleKakaoLogin(
-        context: Context,
         loginMethod: (UserApiClient, (OAuthToken?, Throwable?) -> Unit) -> Unit
     ) {
         val token = suspendCoroutine { continuation ->
@@ -218,9 +255,23 @@ class LoginPageViewModel(
     }
 }
 
+/**
+ * 로그인 화면의 상태를 나타내는 sealed class
+ */
 sealed class LoginState {
+    /** 초기 상태 */
     data object Initial : LoginState()
+
+    /** 로그인 진행 중 상태 */
     data object Loading : LoginState()
+
+    /** 로그인 성공 상태 */
     data object Success : LoginState()
+
+    /**
+     * 로그인 실패 상태
+     *
+     * @param message 실패 사유 메시지
+     */
     data class Error(val message: String) : LoginState()
 }

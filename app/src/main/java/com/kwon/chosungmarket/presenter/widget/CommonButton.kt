@@ -14,6 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.kwon.chosungmarket.ui.theme.AppTheme
 
+/**
+ * 앱 전반에서 사용되는 둥근 모서리의 버튼 Composable
+ */
 @Composable
 fun RoundedButton(
     modifier: Modifier = Modifier,

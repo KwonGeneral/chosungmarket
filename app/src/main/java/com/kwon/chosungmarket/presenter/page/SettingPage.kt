@@ -10,10 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.kwon.chosungmarket.presenter.route.NavigationViewModel
 import com.kwon.chosungmarket.ui.theme.AppTheme
 import com.kwon.chosungmarket.ui.theme.ChosungmarketTheme
-import org.koin.androidx.compose.koinViewModel
 
 @Preview(showBackground = true)
 @Composable
@@ -27,7 +25,6 @@ fun SettingPagePreview() {
 fun SettingPage(
     navController: NavHostController = rememberNavController(),
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
-    navigationViewModel: NavigationViewModel = koinViewModel()
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Text("Setting Page", modifier = modifier, style = AppTheme.styles.SubSmallR())

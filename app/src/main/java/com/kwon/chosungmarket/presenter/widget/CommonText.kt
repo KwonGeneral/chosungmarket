@@ -5,6 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.kwon.chosungmarket.ui.theme.AppTheme
 
+/**
+ * 앱의 친근한 스타일의 제목 텍스트 Composable
+ */
 @Composable
 fun FriendlyTitle(
     modifier: Modifier = Modifier,
@@ -22,6 +25,9 @@ fun FriendlyTitle(
     )
 }
 
+/**
+ * 앱의 친근한 스타일의 본문 텍스트 Composable
+ */
 @Composable
 fun FriendlyBody(
     modifier: Modifier = Modifier,

@@ -3,6 +3,9 @@ package com.kwon.chosungmarket.data.mapper
 import com.kwon.chosungmarket.common.types.QuizDifficulty
 import com.kwon.chosungmarket.domain.model.QuizData
 
+/**
+ * 퀴즈 데이터를 Firestore 데이터로 변환하는 클래스
+ */
 object QuizMapper {
     fun toFirestore(quizData: QuizData): Map<String, Any> = mapOf(
         "consonant" to quizData.consonant,
