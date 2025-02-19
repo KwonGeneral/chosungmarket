@@ -79,4 +79,33 @@ class FirebaseQuizGroupsDb(
             .delete()
             .await()
     }
+
+    /** 추천수가 특정 수 이상인 모든 사용자의 퀴즈 그룹 목록을 조회합니다. */
+    suspend fun getAllTopRatedQuizGroups(minLikes: Int): List<Map<String, Any>> {
+        return try {
+            val userSnapshots = firestore.collection("userList")
+                .get()
+                .await()
+
+            userSnapshots.documents.flatMap { userDoc ->
+                val userId = userDoc.id
+                val quizGroupsCollection = getUserQuizGroupsCollection(userId)
+
+                quizGroupsCollection
+                    .whereGreaterThanOrEqualTo("likeCount", minLikes)
+                    .orderBy("likeCount", Query.Direction.DESCENDING)
+                    .get()
+                    .await()
+                    .documents
+                    .mapNotNull { quizGroupDoc ->
+                        quizGroupDoc.data?.plus(mapOf(
+                            "id" to quizGroupDoc.id,
+                            "userId" to userId
+                        ))
+                    }
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }

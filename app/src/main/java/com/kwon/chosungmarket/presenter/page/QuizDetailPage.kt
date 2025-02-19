@@ -31,14 +31,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import com.kwon.chosungmarket.R
 import com.kwon.chosungmarket.common.utils.KLog
 import com.kwon.chosungmarket.domain.model.QuizData
 import com.kwon.chosungmarket.domain.model.QuizGroupData
+import com.kwon.chosungmarket.domain.usecase.DeleteQuizGroupUseCase
 import com.kwon.chosungmarket.domain.usecase.GetCurrentUserInfoUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupListUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupUseCase
@@ -80,6 +83,12 @@ fun QuizDetailPage(
     val uiState by viewModel.uiState.collectAsState()
     val quizzes by viewModel.quizzes.collectAsState()
 
+    LaunchedEffect(uiState) {
+        if (uiState is QuizDetailState.Deleted) {
+            navController.navigateUp()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -90,6 +99,21 @@ fun QuizDetailPage(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "뒤로가기"
                         )
+                    }
+                },
+                actions = {
+                    if (uiState is QuizDetailState.Success && (uiState as QuizDetailState.Success).quizGroup.userId == viewModel.userId) {
+                        IconButton(
+                            onClick = {
+                                viewModel.deleteQuizGroup((uiState as QuizDetailState.Success).quizGroup.id)
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.icon_delete),
+                                contentDescription = "퀴즈 삭제",
+                                tint = AppTheme.colors.SysColorNegative
+                            )
+                        }
                     }
                 }
             )
@@ -126,6 +150,9 @@ fun QuizDetailPage(
                             .align(Alignment.Center)
                             .padding(16.dp)
                     )
+                }
+                is QuizDetailState.Deleted -> {
+                    // 삭제 완료 시 LaunchedEffect에서 처리
                 }
             }
         }
@@ -275,12 +302,14 @@ private fun QuizPreviewCard(
  * @param getQuizGroupUseCase 개별 퀴즈 그룹 조회 UseCase
  * @param toggleQuizLikeUseCase 좋아요 토글 UseCase
  * @param getCurrentUserInfoUseCase 현재 사용자 정보 조회 UseCase
+ * @param deleteQuizGroupUseCase 퀴즈 그룹 삭제 UseCase
  */
 class QuizDetailViewModel(
     private val getQuizGroupListUseCase: GetQuizGroupListUseCase,
     private val getQuizGroupUseCase: GetQuizGroupUseCase,
     private val toggleQuizLikeUseCase: ToggleQuizLikeUseCase,
     private val getCurrentUserInfoUseCase: GetCurrentUserInfoUseCase,
+    private val deleteQuizGroupUseCase: DeleteQuizGroupUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<QuizDetailState>(QuizDetailState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -288,7 +317,7 @@ class QuizDetailViewModel(
     private val _quizzes = MutableStateFlow<List<QuizData>>(emptyList())
     val quizzes = _quizzes.asStateFlow()
 
-    private var userId: String? = null
+    var userId: String? = null
 
     init {
         viewModelScope.launch {
@@ -372,6 +401,29 @@ class QuizDetailViewModel(
             }
         }
     }
+
+    /**
+     * 퀴즈 그룹을 삭제합니다.
+     *
+     * @param quizGroupId 삭제할 퀴즈 그룹의 ID
+     */
+    fun deleteQuizGroup(quizGroupId: String) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = QuizDetailState.Loading
+
+                deleteQuizGroupUseCase.invoke(quizGroupId)
+                    .onSuccess {
+                        _uiState.value = QuizDetailState.Deleted
+                    }
+                    .onFailure { e ->
+                        _uiState.value = QuizDetailState.Error(e.message ?: "퀴즈 그룹 삭제에 실패했습니다.")
+                    }
+            } catch (e: Exception) {
+                _uiState.value = QuizDetailState.Error(e.message ?: "알 수 없는 오류가 발생했습니다.")
+            }
+        }
+    }
 }
 
 /**
@@ -396,4 +448,9 @@ sealed class QuizDetailState {
      * @param message 에러 메시지
      */
     data class Error(val message: String) : QuizDetailState()
+
+    /**
+     * 삭제 상태
+     */
+    data object Deleted : QuizDetailState()
 }

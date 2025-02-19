@@ -130,4 +130,28 @@ class QuizRepository(
             Result.failure(e)
         }
     }
+
+    /** 퀴즈 그룹과 관련된 모든 데이터를 삭제합니다. */
+    override suspend fun deleteQuizGroup(quizGroupId: String): Result<Unit> {
+        return try {
+            val userId = sessionRepositoryImpl.getUserId().first()
+                ?: return Result.failure(Exception("User not logged in"))
+
+            // 1. 퀴즈 그룹의 퀴즈 ID 목록 가져오기
+            val quizIdList = getQuizIdListByQuizGroup(quizGroupId).getOrNull() ?: emptyList()
+
+            // 2. 퀴즈 데이터 삭제
+            if (quizIdList.isNotEmpty()) {
+                firebaseQuizDb.deleteQuizzes(quizIdList)
+            }
+
+            // 3. 퀴즈 그룹 삭제
+            firebaseQuizGroupsDb.deleteQuizGroup(userId, quizGroupId)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

@@ -95,8 +95,8 @@ fun BottomItem(
  */
 val bottomNavigationList = listOf(
     CmRouter.Home,
+    CmRouter.HallOfFame,
     CmRouter.MyInfo,
-    CmRouter.Setting,
 )
 
 /**
@@ -133,6 +133,14 @@ fun BottomNavigation(
         ) {
 
             BottomItem(
+                name = "명예의 전당",
+                path = arrayListOf(CmRouter.HallOfFame.route),
+                icon = R.drawable.icon_usage,
+                nv = nv,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+
+            BottomItem(
                 name = "홈",
                 path = arrayListOf(CmRouter.Home.route),
                 icon = R.drawable.icon_home,
@@ -141,9 +149,9 @@ fun BottomNavigation(
             )
 
             BottomItem(
-                name = "설정",
-                path = arrayListOf(CmRouter.Setting.route),
-                icon = R.drawable.icon_setting,
+                name = "내 정보",
+                path = arrayListOf(CmRouter.MyInfo.route),
+                icon = R.drawable.icon_information,
                 nv = nv,
                 modifier = Modifier.weight(1f).fillMaxHeight()
             )

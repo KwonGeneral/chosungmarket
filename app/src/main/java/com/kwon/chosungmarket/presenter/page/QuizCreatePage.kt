@@ -2,15 +2,19 @@ package com.kwon.chosungmarket.presenter.page
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -87,92 +91,100 @@ fun QuizCreatePage(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(AppTheme.colors.CompColorPageDefaultBackground)
-            .padding(16.dp)
+            .imePadding()  // 키보드 패딩 추가
     ) {
-        FriendlyTitle(
-            text = "새로운 퀴즈 만들기",
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())  // 수직 스크롤 추가
+                .background(AppTheme.colors.CompColorPageDefaultBackground)
+                .padding(16.dp)
         ) {
-            item {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("퀴즈 제목") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            FriendlyTitle(
+                text = "새로운 퀴즈 만들기",
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
 
-            item {
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("퀴즈 설명") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
-                )
-            }
-
-            item {
-                Column {
-                    Text(
-                        text = "난이도",
-                        style = AppTheme.styles.BodySmallSB(),
-                        modifier = Modifier.padding(bottom = 8.dp)
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("퀴즈 제목") },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        QuizDifficulty.entries.forEach { difficulty ->
-                            FilterChip(
-                                selected = selectedDifficulty == difficulty,
-                                onClick = { selectedDifficulty = difficulty },
-                                label = { Text(difficulty.name) }
-                            )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("퀴즈 설명") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+                }
+
+                item {
+                    Column {
+                        Text(
+                            text = "난이도",
+                            style = AppTheme.styles.BodySmallSB(),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            QuizDifficulty.entries.forEach { difficulty ->
+                                FilterChip(
+                                    selected = selectedDifficulty == difficulty,
+                                    onClick = { selectedDifficulty = difficulty },
+                                    label = { Text(difficulty.name) }
+                                )
+                            }
                         }
+                    }
+                }
+
+                itemsIndexed(quizzes) { index, quiz ->
+                    QuizFormCard(
+                        quiz = quiz,
+                        onQuizUpdate = { viewModel.updateQuizForm(index, it) },
+                        onDelete = { viewModel.removeQuizForm(index) },
+                        canDelete = quizzes.size > 1
+                    )
+                }
+
+                item {
+                    TextButton(
+                        onClick = { viewModel.addQuizForm() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "퀴즈 추가")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("퀴즈 추가하기")
                     }
                 }
             }
 
-            itemsIndexed(quizzes) { index, quiz ->
-                QuizFormCard(
-                    quiz = quiz,
-                    onQuizUpdate = { viewModel.updateQuizForm(index, it) },
-                    onDelete = { viewModel.removeQuizForm(index) },
-                    canDelete = quizzes.size > 1
-                )
-            }
-
-            item {
-                TextButton(
-                    onClick = { viewModel.addQuizForm() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "퀴즈 추가")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("퀴즈 추가하기")
-                }
-            }
+            RoundedButton(
+                text = if (createState is QuizCreateState.Loading) "생성 중..." else "퀴즈 생성하기",
+                onClick = {
+                    viewModel.createQuizGroup(title, description, selectedDifficulty)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                isEnable = createState !is QuizCreateState.Loading,
+            )
         }
-
-        RoundedButton(
-            text = if (createState is QuizCreateState.Loading) "생성 중..." else "퀴즈 생성하기",
-            onClick = {
-                viewModel.createQuizGroup(title, description, selectedDifficulty)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            isEnable = createState !is QuizCreateState.Loading,
-        )
     }
 }
 

@@ -2,6 +2,7 @@ package com.kwon.chosungmarket.di
 
 import com.kwon.chosungmarket.domain.usecase.AutoLoginUseCase
 import com.kwon.chosungmarket.domain.usecase.CreateQuizGroupUseCase
+import com.kwon.chosungmarket.domain.usecase.DeleteQuizGroupUseCase
 import com.kwon.chosungmarket.domain.usecase.GetCurrentUserInfoUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupListUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupUseCase
@@ -34,4 +35,5 @@ val domainModule = module {
     factory { ToggleQuizLikeUseCase(get(), get()) }
     factory { GetQuizGroupUseCase(get(), get()) }
     factory { GetQuizResultUseCase(get(), get(), get()) }
+    factory { DeleteQuizGroupUseCase(get(), get()) }
 }

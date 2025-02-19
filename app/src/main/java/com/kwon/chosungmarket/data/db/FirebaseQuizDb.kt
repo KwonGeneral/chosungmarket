@@ -46,4 +46,21 @@ class FirebaseQuizDb(
     suspend fun getQuiz(quizId: String): Map<String, Any>? {
         return quizsCollection.document(quizId).get().await().data
     }
+
+    /** 여러 퀴즈를 한 번에 삭제합니다. */
+    suspend fun deleteQuizzes(quizIdList: List<String>) {
+        if (quizIdList.isEmpty()) return
+
+        // 배치 작업 생성
+        val batch = firestore.batch()
+
+        // 각 퀴즈에 대한 삭제 작업을 배치에 추가
+        quizIdList.forEach { quizId ->
+            val docRef = quizsCollection.document(quizId)
+            batch.delete(docRef)
+        }
+
+        // 배치 작업 실행
+        batch.commit().await()
+    }
 }

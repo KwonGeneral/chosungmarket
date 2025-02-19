@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.di
 
+import com.kwon.chosungmarket.presenter.page.HallOfFameViewModel
 import com.kwon.chosungmarket.presenter.page.HomePageViewModel
 import com.kwon.chosungmarket.presenter.page.LoginPageViewModel
 import com.kwon.chosungmarket.presenter.page.QuizCreateViewModel
@@ -18,7 +19,8 @@ val viewModelModule = module {
     viewModel { LoginPageViewModel(get()) }
     viewModel { HomePageViewModel(get(), get()) }
     viewModel { QuizCreateViewModel(get()) }
-    viewModel { QuizDetailViewModel(get(), get(), get(), get()) }
+    viewModel { QuizDetailViewModel(get(), get(), get(), get(), get()) }
     viewModel { QuizGameViewModel(get(), get()) }
     viewModel { QuizResultViewModel(get()) }
+    viewModel { HallOfFameViewModel(get()) }
 }

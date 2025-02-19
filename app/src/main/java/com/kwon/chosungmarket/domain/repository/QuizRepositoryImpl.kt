@@ -33,4 +33,7 @@ interface QuizRepositoryImpl {
 
     /** 퀴즈 그룹 ID를 통해 퀴즈 ID 목록을 조회합니다. */
     suspend fun getQuizIdListByQuizGroup(quizGroupId: String): Result<List<String>>
+
+    /** 퀴즈 그룹을 삭제합니다. */
+    suspend fun deleteQuizGroup(quizGroupId: String): Result<Unit>
 }
