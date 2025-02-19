@@ -24,7 +24,7 @@ class GetQuizGroupUseCase(
             ?: return Result.failure(Exception("User not logged in"))
 
         return try {
-            val quizGroup = quizRepositoryImpl.getQuizGroupList(limit = 1)
+            val quizGroup = quizRepositoryImpl.getQuizGroupList(limit = 100)
                 .first()
                 .find { it.id == quizGroupId }
                 ?: return Result.failure(Exception("퀴즈 그룹을 찾을 수 없습니다."))
