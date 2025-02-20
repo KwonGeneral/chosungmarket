@@ -39,9 +39,6 @@ class QuizResultRepository(
     /** 퀴즈 결과를 조회합니다. */
     override suspend fun getQuizResult(resultId: String): Result<QuizResultData?> {
         return try {
-            val userId = sessionRepositoryImpl.getUserId().first()
-                ?: return Result.failure(Exception("User not logged in"))
-
             val resultData = firebaseQuizResultsDb.getQuizResult(resultId)
             val quizResult = resultData?.let { QuizResultMapper.fromFirestore(resultId, it) }
             Result.success(quizResult)
@@ -69,11 +66,18 @@ class QuizResultRepository(
     /** 퀴즈 결과를 삭제합니다. */
     override suspend fun deleteQuizResult(resultId: String): Result<Unit> {
         return try {
-            val userId = sessionRepositoryImpl.getUserId().first()
-                ?: return Result.failure(Exception("User not logged in"))
-
             firebaseQuizResultsDb.deleteQuizResult(resultId)
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** 퀴즈 그룹의 퀴즈 결과 목록 갯수를 가져옵니다. */
+    override suspend fun getQuizGroupResultCount(quizGroupId: String): Result<Int> {
+        return try {
+            val count = firebaseQuizResultsDb.getQuizGroupResultCount(quizGroupId)
+            Result.success(count)
         } catch (e: Exception) {
             Result.failure(e)
         }

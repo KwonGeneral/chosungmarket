@@ -19,7 +19,8 @@ object QuizGroupMapper {
         "createdAt" to quizGroupData.createdAt,
         "updatedAt" to quizGroupData.updatedAt,
         "userNickname" to quizGroupData.userNickname,
-        "status" to quizGroupData.status.name
+        "status" to quizGroupData.status.name,
+        "quizResultCount" to quizGroupData.quizResultCount
     )
 
     fun fromFirestore(id: String, data: Map<String, Any>): QuizGroupData = QuizGroupData(
@@ -39,6 +40,7 @@ object QuizGroupMapper {
             QuizGroupStatus.valueOf(data["status"] as? String ?: QuizGroupStatus.ACTIVE.name)
         } catch (e: Exception) {
             QuizGroupStatus.ACTIVE
-        }
+        },
+        quizResultCount = (data["quizResultCount"] as? Number?)?.toInt() ?: 0
     )
 }

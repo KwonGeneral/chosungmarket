@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.map
  * 퀴즈 그룹 목록을 가져오는 UseCase
  */
 class GetQuizGroupListUseCase(
-    private val quizRepositoryImpl: QuizRepositoryImpl
+    private val quizRepositoryImpl: QuizRepositoryImpl,
+    private val getQuizResultCountUseCase: GetQuizResultCountUseCase
 ) {
     /**
      * 퀴즈 그룹 목록을 가져옵니다.
@@ -25,7 +26,15 @@ class GetQuizGroupListUseCase(
     ): Flow<List<QuizGroupData>> {
         return quizRepositoryImpl.getQuizGroupList(limit, lastDocId)
             .map { quizGroups ->
-                quizGroups.sortedByDescending { it.createdAt }
+                quizGroups.map { quizGroup ->
+                    // 각 퀴즈 그룹의 결과 카운트를 조회하여 추가
+                    val resultCount = getQuizResultCountUseCase.invoke(quizGroup.id)
+                        .getOrDefault(0)
+
+                    // 새로운 퀴즈 그룹 데이터 생성 (quizResultCount 포함)
+                    quizGroup.copy(quizResultCount = resultCount, userNickname = quizGroup.userNickname.ifBlank { "익명" })
+                }
+                    .sortedByDescending { it.createdAt }
             }
             .catch { e ->
                 emit(emptyList())

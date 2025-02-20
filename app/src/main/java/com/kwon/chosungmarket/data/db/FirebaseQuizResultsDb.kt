@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.data.db
 
+import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
@@ -45,5 +46,16 @@ class FirebaseQuizResultsDb(
             .document(resultId)
             .delete()
             .await()
+    }
+
+    suspend fun getQuizGroupResultCount(quizGroupId: String): Int {
+        return quizResultsCollection
+            .whereEqualTo("quizGroupId", quizGroupId)
+            .count()
+            // SERVER: 서버에서 직접 카운트를 계산
+            // CLIENT: 로컬 캐시에서 카운트를 계산
+            .get(AggregateSource.SERVER)
+            .await()
+            .count.toInt()
     }
 }

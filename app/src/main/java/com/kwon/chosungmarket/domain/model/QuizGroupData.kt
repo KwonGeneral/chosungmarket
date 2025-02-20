@@ -18,6 +18,7 @@ import com.kwon.chosungmarket.common.types.QuizGroupStatus
  * @property status 퀴즈 그룹 상태 (ACTIVE, REPORTED, DELETED 등)
  * @property image 퀴즈 그룹 이미지 URL
  * @property tagList 퀴즈 그룹 태그 목록
+ * @property quizResultCount 퀴즈 결과 수
  */
 data class QuizGroupData(
     val id: String,
@@ -27,6 +28,7 @@ data class QuizGroupData(
     val image: String = "",
     val tagList: List<String> = emptyList(),
     val quizIdList: List<String>,
+    val quizResultCount: Int = 0,
     val likeCount: Int = 0,
     val likedUserIdList: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),

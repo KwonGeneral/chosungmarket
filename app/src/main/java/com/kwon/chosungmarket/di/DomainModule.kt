@@ -6,6 +6,7 @@ import com.kwon.chosungmarket.domain.usecase.DeleteQuizGroupUseCase
 import com.kwon.chosungmarket.domain.usecase.GetCurrentUserInfoUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupListUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupUseCase
+import com.kwon.chosungmarket.domain.usecase.GetQuizResultCountUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizResultUseCase
 import com.kwon.chosungmarket.domain.usecase.GetTopQuizListUseCase
 import com.kwon.chosungmarket.domain.usecase.LogoutUseCase
@@ -29,11 +30,12 @@ val domainModule = module {
 
     // 퀴즈 관련 UseCase
     factory { CreateQuizGroupUseCase(get(), get(), get()) }
-    factory { GetQuizGroupListUseCase(get()) }
+    factory { GetQuizGroupListUseCase(get(), get()) }
     factory { GetTopQuizListUseCase(get()) }
     factory { ProcessQuizResultUseCase(get(), get(), get(), get()) }
     factory { ToggleQuizLikeUseCase(get(), get()) }
-    factory { GetQuizGroupUseCase(get(), get()) }
+    factory { GetQuizGroupUseCase(get(), get(), get()) }
     factory { GetQuizResultUseCase(get(), get(), get()) }
     factory { DeleteQuizGroupUseCase(get(), get(), get()) }
+    factory { GetQuizResultCountUseCase(get()) }
 }

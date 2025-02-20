@@ -18,4 +18,7 @@ interface QuizResultRepositoryImpl {
 
     /** 퀴즈 결과를 삭제합니다. */
     suspend fun deleteQuizResult(resultId: String): Result<Unit>
+
+    /** 퀴즈 그룹의 퀴즈 결과 목록 갯수를 가져옵니다. */
+    suspend fun getQuizGroupResultCount(quizGroupId: String): Result<Int>
 }

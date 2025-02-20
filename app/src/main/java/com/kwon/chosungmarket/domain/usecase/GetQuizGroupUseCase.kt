@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.first
  */
 class GetQuizGroupUseCase(
     private val quizRepositoryImpl: QuizRepositoryImpl,
-    private val sessionRepositoryImpl: SessionRepositoryImpl
+    private val sessionRepositoryImpl: SessionRepositoryImpl,
+    private val getQuizResultCountUseCase: GetQuizResultCountUseCase
 ) {
     /**
      * 퀴즈 그룹을 가져옵니다.
@@ -24,7 +25,7 @@ class GetQuizGroupUseCase(
             ?: return Result.failure(Exception("User not logged in"))
 
         return try {
-            val quizGroup = quizRepositoryImpl.getQuizGroupList(limit = 100)
+            val quizGroup = quizRepositoryImpl.getQuizGroupList(limit = 1)
                 .first()
                 .find { it.id == quizGroupId }
                 ?: return Result.failure(Exception("퀴즈 그룹을 찾을 수 없습니다."))
@@ -32,7 +33,13 @@ class GetQuizGroupUseCase(
             val quizzes = quizRepositoryImpl.getQuizListByIdList(quizGroup.quizIdList)
                 .getOrElse { return Result.failure(it) }
 
-            Result.success(quizGroup to quizzes)
+            // 결과 카운트 조회 및 추가
+            val resultCount = getQuizResultCountUseCase.invoke(quizGroupId)
+                .getOrDefault(0)
+
+            val updatedQuizGroup = quizGroup.copy(quizResultCount = resultCount, userNickname = quizGroup.userNickname.ifBlank { "익명" })
+
+            Result.success(updatedQuizGroup to quizzes)
         } catch (e: Exception) {
             Result.failure(e)
         }
