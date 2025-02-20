@@ -5,6 +5,7 @@ import com.kwon.chosungmarket.domain.model.QuizResultData
 import com.kwon.chosungmarket.domain.repository.QuizRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.QuizResultRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
+import com.kwon.chosungmarket.domain.repository.UserRepositoryImpl
 import kotlinx.coroutines.flow.first
 import java.util.UUID
 
@@ -15,7 +16,8 @@ import java.util.UUID
 class ProcessQuizResultUseCase(
     private val quizRepositoryImpl: QuizRepositoryImpl,
     private val quizResultRepositoryImpl: QuizResultRepositoryImpl,
-    private val sessionRepositoryImpl: SessionRepositoryImpl
+    private val sessionRepositoryImpl: SessionRepositoryImpl,
+    private val userRepositoryImpl: UserRepositoryImpl
 ) {
     /**
      * 퀴즈 결과를 처리합니다.
@@ -26,17 +28,18 @@ class ProcessQuizResultUseCase(
      */
     suspend fun invoke(quizGroupId: String, userAnswerList: List<String>): Result<String> {
         return try {
+            val userId = sessionRepositoryImpl.getUserId().first()
+                ?: return Result.failure(Exception("User not logged in"))
+
             val quizIdList = quizRepositoryImpl.getQuizIdListByQuizGroup(quizGroupId)
                 .getOrElse { return Result.failure(it) }
 
             val quizzes = quizRepositoryImpl.getQuizListByIdList(quizIdList).getOrThrow()
-
-            val correctAnswerList = quizzes.map { it.answer }
-            val score = calculateScore(correctAnswerList, userAnswerList)
+            val score = calculateScore(quizzes.map { it.answer }, userAnswerList)
 
             val quizResult = QuizResultData(
                 id = UUID.randomUUID().toString(),
-                userId = sessionRepositoryImpl.getUserId().first()!!,
+                userId = userId,
                 quizGroupId = quizGroupId,
                 score = score,
                 answerList = userAnswerList,
@@ -45,6 +48,12 @@ class ProcessQuizResultUseCase(
             )
 
             quizResultRepositoryImpl.saveQuizResult(quizResult)
+                .onSuccess { resultId ->
+                    // user의 quizResultIdList에 결과 ID 추가
+                    userRepositoryImpl.addQuizResultToUser(userId, resultId)
+                        .getOrThrow()
+                }
+
         } catch (e: Exception) {
             Result.failure(e)
         }

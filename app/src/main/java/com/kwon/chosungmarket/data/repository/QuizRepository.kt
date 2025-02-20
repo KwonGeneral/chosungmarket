@@ -37,11 +37,8 @@ class QuizRepository(
     /** 새로운 퀴즈 그룹을 생성합니다. */
     override suspend fun createQuizGroup(quizGroup: QuizGroupData): Result<String> {
         return try {
-            val userId = sessionRepositoryImpl.getUserId().first()
-                ?: return Result.failure(Exception("User not logged in"))
-
             val quizGroupData = QuizGroupMapper.toFirestore(quizGroup)
-            val documentId = firebaseQuizGroupsDb.createQuizGroup(userId, quizGroupData)
+            val documentId = firebaseQuizGroupsDb.createQuizGroup(quizGroupData)
             Result.success(documentId)
         } catch (e: Exception) {
             Result.failure(e)
@@ -55,10 +52,7 @@ class QuizRepository(
      * @param lastDocId 마지막으로 가져온 문서 ID (null이면 첫 페이지)
      */
     override fun getQuizGroupList(limit: Int, lastDocId: String?): Flow<List<QuizGroupData>> = flow {
-        val userId = sessionRepositoryImpl.getUserId().first()
-            ?: throw Exception("User not logged in")
-
-        val quizGroups = firebaseQuizGroupsDb.getQuizGroups(userId, limit, lastDocId)
+        val quizGroups = firebaseQuizGroupsDb.getQuizGroups(limit, lastDocId)
         val mappedQuizGroups = quizGroups.map { quizGroupData ->
             QuizGroupMapper.fromFirestore(quizGroupData["id"] as String, quizGroupData)
         }
@@ -82,13 +76,25 @@ class QuizRepository(
         }
     }
 
+    /** 퀴즈 ID를 통해 퀴즈를 조회합니다. */
+    override suspend fun getQuizGroup(quizGroupId: String): Result<QuizGroupData> {
+        return try {
+            val quizGroupData = firebaseQuizGroupsDb.getQuizGroup(quizGroupId)
+                ?: return Result.failure(Exception("퀴즈 그룹을 찾을 수 없습니다."))
+
+            Result.success(QuizGroupMapper.fromFirestore(quizGroupId, quizGroupData))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /** 퀴즈 그룹의 좋아요를 토글합니다. */
     override suspend fun toggleLike(quizGroupId: String): Result<Unit> {
         return try {
             val userId = sessionRepositoryImpl.getUserId().first()
                 ?: return Result.failure(Exception("User not logged in"))
 
-            val quizGroup = firebaseQuizGroupsDb.getQuizGroup(userId, quizGroupId)
+            val quizGroup = firebaseQuizGroupsDb.getQuizGroup(quizGroupId)
                 ?: return Result.failure(Exception("Quiz group not found"))
 
             val likedUserIdList = (quizGroup["likedUserIdList"] as? List<*>)
@@ -105,7 +111,7 @@ class QuizRepository(
                 (quizGroup["likeCount"] as Number).toInt() + 1
             }
 
-            firebaseQuizGroupsDb.updateQuizGroup(userId, quizGroupId, mapOf(
+            firebaseQuizGroupsDb.updateQuizGroup(quizGroupId, mapOf(
                 "likeCount" to newLikeCount,
                 "likedUserIdList" to likedUserIdList
             ))
@@ -119,10 +125,7 @@ class QuizRepository(
     /** 퀴즈 그룹 ID를 통해 퀴즈 ID 목록을 조회합니다. */
     override suspend fun getQuizIdListByQuizGroup(quizGroupId: String): Result<List<String>> {
         return try {
-            val userId = sessionRepositoryImpl.getUserId().first()
-                ?: return Result.failure(Exception("User not logged in"))
-
-            val quizGroupRef = firebaseQuizGroupsDb.getQuizGroup(userId, quizGroupId)
+            val quizGroupRef = firebaseQuizGroupsDb.getQuizGroup(quizGroupId)
             val quizIdList = (quizGroupRef?.get("quizIdList") as? List<String>) ?: emptyList()
 
             Result.success(quizIdList)
@@ -134,9 +137,6 @@ class QuizRepository(
     /** 퀴즈 그룹과 관련된 모든 데이터를 삭제합니다. */
     override suspend fun deleteQuizGroup(quizGroupId: String): Result<Unit> {
         return try {
-            val userId = sessionRepositoryImpl.getUserId().first()
-                ?: return Result.failure(Exception("User not logged in"))
-
             // 1. 퀴즈 그룹의 퀴즈 ID 목록 가져오기
             val quizIdList = getQuizIdListByQuizGroup(quizGroupId).getOrNull() ?: emptyList()
 
@@ -146,7 +146,7 @@ class QuizRepository(
             }
 
             // 3. 퀴즈 그룹 삭제
-            firebaseQuizGroupsDb.deleteQuizGroup(userId, quizGroupId)
+            firebaseQuizGroupsDb.deleteQuizGroup(quizGroupId)
 
             Result.success(Unit)
         } catch (e: Exception) {

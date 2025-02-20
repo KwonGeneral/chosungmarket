@@ -11,8 +11,11 @@ interface QuizRepositoryImpl {
     /** 새로운 퀴즈를 생성합니다. */
     suspend fun createQuiz(quiz: QuizData): Result<String>
 
-    /** 새로운 퀴즈 그룹을 생성합니다. */
-    suspend fun createQuizGroup(quizGroup: QuizGroupData): Result<String>
+    /** 여러 퀴즈를 ID 목록으로 조회합니다. */
+    suspend fun getQuizListByIdList(quizIdList: List<String>): Result<List<QuizData>>
+
+    /** 퀴즈 ID를 통해 퀴즈를 조회합니다. */
+    suspend fun getQuizGroup(quizGroupId: String): Result<QuizGroupData>
 
     /**
      * 퀴즈 그룹 목록을 페이지네이션하여 조회합니다.
@@ -25,8 +28,8 @@ interface QuizRepositoryImpl {
         lastDocId: String? = null
     ): Flow<List<QuizGroupData>>
 
-    /** 여러 퀴즈를 ID 목록으로 조회합니다. */
-    suspend fun getQuizListByIdList(quizIdList: List<String>): Result<List<QuizData>>
+    /** 새로운 퀴즈 그룹을 생성합니다. */
+    suspend fun createQuizGroup(quizGroup: QuizGroupData): Result<String>
 
     /** 퀴즈 그룹의 좋아요를 토글합니다. */
     suspend fun toggleLike(quizGroupId: String): Result<Unit>

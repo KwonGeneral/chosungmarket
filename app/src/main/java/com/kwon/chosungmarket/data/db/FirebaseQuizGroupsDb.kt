@@ -13,26 +13,22 @@ class FirebaseQuizGroupsDb(
     private val firestore: FirebaseFirestore
 ) {
     /** 특정 사용자의 퀴즈 그룹 컬렉션 참조를 반환합니다. */
-    private fun getUserQuizGroupsCollection(userId: String) =
-        firestore.collection("userList")
-            .document(userId)
-            .collection("quizGroupList")
+    private val quizGroupsCollection = firestore.collection("quizGroupList")
 
     /**
      * 페이지네이션을 적용하여 퀴즈 그룹 목록을 조회합니다.
      * @param lastDocId 마지막으로 조회한 문서 ID (null이면 첫 페이지)
      */
     suspend fun getQuizGroups(
-        userId: String,
         limit: Int = 10,
         lastDocId: String? = null
     ): List<Map<String, Any>> {
-        var query = getUserQuizGroupsCollection(userId)
+        var query = quizGroupsCollection
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .limit(limit.toLong())
 
         if (lastDocId != null) {
-            val lastDoc = getUserQuizGroupsCollection(userId)
+            val lastDoc = quizGroupsCollection
                 .document(lastDocId)
                 .get()
                 .await()
@@ -48,16 +44,16 @@ class FirebaseQuizGroupsDb(
     }
 
     /** 퀴즈 그룹을 생성합니다. */
-    suspend fun createQuizGroup(userId: String, quizGroupData: Map<String, Any>): String {
-        val docRef = getUserQuizGroupsCollection(userId)
+    suspend fun createQuizGroup(quizGroupData: Map<String, Any>): String {
+        val docRef = quizGroupsCollection
             .add(quizGroupData)
             .await()
         return docRef.id
     }
 
     /** 퀴즈 그룹을 조회합니다. */
-    suspend fun getQuizGroup(userId: String, quizGroupId: String): Map<String, Any>? {
-        return getUserQuizGroupsCollection(userId)
+    suspend fun getQuizGroup(quizGroupId: String): Map<String, Any>? {
+        return quizGroupsCollection
             .document(quizGroupId)
             .get()
             .await()
@@ -65,16 +61,16 @@ class FirebaseQuizGroupsDb(
     }
 
     /** 퀴즈 그룹을 업데이트합니다. */
-    suspend fun updateQuizGroup(userId: String, quizGroupId: String, updates: Map<String, Any>) {
-        getUserQuizGroupsCollection(userId)
+    suspend fun updateQuizGroup(quizGroupId: String, updates: Map<String, Any>) {
+        quizGroupsCollection
             .document(quizGroupId)
             .update(updates)
             .await()
     }
 
     /** 퀴즈 그룹을 삭제합니다. */
-    suspend fun deleteQuizGroup(userId: String, quizGroupId: String) {
-        getUserQuizGroupsCollection(userId)
+    suspend fun deleteQuizGroup(quizGroupId: String) {
+        quizGroupsCollection
             .document(quizGroupId)
             .delete()
             .await()
@@ -83,27 +79,15 @@ class FirebaseQuizGroupsDb(
     /** 추천수가 특정 수 이상인 모든 사용자의 퀴즈 그룹 목록을 조회합니다. */
     suspend fun getAllTopRatedQuizGroups(minLikes: Int): List<Map<String, Any>> {
         return try {
-            val userSnapshots = firestore.collection("userList")
+            quizGroupsCollection
+                .whereGreaterThanOrEqualTo("likeCount", minLikes)
+                .orderBy("likeCount", Query.Direction.DESCENDING)
                 .get()
                 .await()
-
-            userSnapshots.documents.flatMap { userDoc ->
-                val userId = userDoc.id
-                val quizGroupsCollection = getUserQuizGroupsCollection(userId)
-
-                quizGroupsCollection
-                    .whereGreaterThanOrEqualTo("likeCount", minLikes)
-                    .orderBy("likeCount", Query.Direction.DESCENDING)
-                    .get()
-                    .await()
-                    .documents
-                    .mapNotNull { quizGroupDoc ->
-                        quizGroupDoc.data?.plus(mapOf(
-                            "id" to quizGroupDoc.id,
-                            "userId" to userId
-                        ))
-                    }
-            }
+                .documents
+                .mapNotNull { document ->
+                    document.data?.plus("id" to document.id)
+                }
         } catch (e: Exception) {
             emptyList()
         }

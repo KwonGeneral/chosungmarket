@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.data.repository
 
+import com.google.firebase.firestore.FieldValue
 import com.kakao.sdk.user.UserApiClient
 import com.kwon.chosungmarket.data.db.FirebaseUserDb
 import com.kwon.chosungmarket.data.db.SharedDataStore
@@ -63,11 +64,12 @@ class UserRepository(
     }
 
     /** 사용자 프로필을 업데이트합니다. */
-    override suspend fun updateUserProfile(userId: String, nickname: String, profileImageId: Int): Result<Unit> {
+    override suspend fun updateUserProfile(userId: String, nickname: String, profileImageId: Int, image: String): Result<Unit> {
         return try {
             firebaseUserDb.updateUser(userId, mapOf(
                 "nickname" to nickname.trim(),
                 "profileImageId" to profileImageId,
+                "image" to image,
                 "updatedAt" to System.currentTimeMillis()
             ))
             Result.success(Unit)
@@ -116,6 +118,43 @@ class UserRepository(
             }
         }
     }
+
+    /** 사용자에게 퀴즈 그룹을 추가합니다. */
+    override suspend fun addQuizGroupToUser(userId: String, quizGroupId: String): Result<Unit> {
+        return try {
+            firebaseUserDb.updateUser(userId, mapOf(
+                "quizGroupIdList" to FieldValue.arrayUnion(quizGroupId)
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** 사용자에게 퀴즈 결과를 추가합니다. */
+    override suspend fun addQuizResultToUser(userId: String, resultId: String): Result<Unit> {
+        return try {
+            firebaseUserDb.updateUser(userId, mapOf(
+                "quizResultIdList" to FieldValue.arrayUnion(resultId)
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** 사용자에게 퀴즈 그룹을 제거합니다. */
+    override suspend fun removeQuizGroupFromUser(userId: String, quizGroupId: String): Result<Unit> {
+        return try {
+            firebaseUserDb.updateUser(userId, mapOf(
+                "quizGroupIdList" to FieldValue.arrayRemove(quizGroupId)
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 
     /** 카카오 사용자 정보를 담는 데이터 클래스 */
     private data class KakaoUserInfo(

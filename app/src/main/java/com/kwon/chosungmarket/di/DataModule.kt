@@ -45,5 +45,5 @@ val dataModule = module {
     single<HallOfFameRepositoryImpl> { HallOfFameRepository(get(), get()) }
     single<PersistentStorageRepositoryImpl> { PersistentStorageRepository(get()) }
     single<SessionRepositoryImpl> { SessionRepository() }
-    single<QuizResultRepositoryImpl> { QuizResultRepository(get(), get()) }
+    single<QuizResultRepositoryImpl> { QuizResultRepository(get(), get(), get()) }
 }

@@ -12,13 +12,18 @@ package com.kwon.chosungmarket.domain.model
  * @property createdAt 계정 생성 시간 (서버 타임스탬프)
  * @property updatedAt 마지막 정보 수정 시간 (서버 타임스탬프)
  * @property lastLoginAt 마지막 로그인 시간 (서버 타임스탬프)
+ * @property quizGroupIdList 사용자가 생성한 퀴즈 그룹 ID 목록
+ * @property quizResultIdList 사용자가 푼 퀴즈 결과 ID 목록
  */
 data class UserData(
     val id: String,
     val kakaoId: String,
     val nickname: String,
+    val image: String = "",
     val profileImageId: Int,
     val point: Int = 0,
+    val quizGroupIdList: List<String> = emptyList(),
+    val quizResultIdList: List<String> = emptyList(),
     val medalList: List<MedalData> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

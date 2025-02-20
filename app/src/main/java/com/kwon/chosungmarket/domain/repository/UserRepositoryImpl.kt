@@ -14,7 +14,8 @@ interface UserRepositoryImpl {
     suspend fun updateUserProfile(
         userId: String,
         nickname: String,
-        profileImageId: Int
+        profileImageId: Int,
+        image: String
     ): Result<Unit>
 
     /** 현재 로그인한 사용자 정보를 관찰합니다. */
@@ -22,4 +23,13 @@ interface UserRepositoryImpl {
 
     /** 회원 탈퇴를 처리합니다. */
     suspend fun withdrawUser(userId: String): Result<Unit>
+
+    /** 사용자의 퀴즈 그룹 목록 추가 */
+    suspend fun addQuizGroupToUser(userId: String, quizGroupId: String): Result<Unit>
+
+    /** 사용자의 퀴즈 결과 추가 */
+    suspend fun addQuizResultToUser(userId: String, resultId: String): Result<Unit>
+
+    /** 사용자의 퀴즈 그룹 목록 제거 */
+    suspend fun removeQuizGroupFromUser(userId: String, quizGroupId: String): Result<Unit>
 }

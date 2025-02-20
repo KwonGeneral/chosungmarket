@@ -31,9 +31,9 @@ val domainModule = module {
     factory { CreateQuizGroupUseCase(get(), get(), get()) }
     factory { GetQuizGroupListUseCase(get()) }
     factory { GetTopQuizListUseCase(get()) }
-    factory { ProcessQuizResultUseCase(get(), get(), get()) }
+    factory { ProcessQuizResultUseCase(get(), get(), get(), get()) }
     factory { ToggleQuizLikeUseCase(get(), get()) }
     factory { GetQuizGroupUseCase(get(), get()) }
     factory { GetQuizResultUseCase(get(), get(), get()) }
-    factory { DeleteQuizGroupUseCase(get(), get()) }
+    factory { DeleteQuizGroupUseCase(get(), get(), get()) }
 }

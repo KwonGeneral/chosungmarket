@@ -1,6 +1,7 @@
 package com.kwon.chosungmarket.data.db
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -11,20 +12,17 @@ import kotlinx.coroutines.tasks.await
 class FirebaseQuizResultsDb(
     private val firestore: FirebaseFirestore
 ) {
-    private fun getUserQuizResultsCollection(userId: String) =
-        firestore.collection("userList")
-            .document(userId)
-            .collection("quizResultList")
+    private val quizResultsCollection = firestore.collection("quizResultList")
 
-    suspend fun createQuizResult(userId: String, resultData: Map<String, Any>): String {
-        val docRef = getUserQuizResultsCollection(userId)
+    suspend fun createQuizResult(resultData: Map<String, Any>): String {
+        val docRef = quizResultsCollection
             .add(resultData)
             .await()
         return docRef.id
     }
 
-    suspend fun getQuizResult(userId: String, resultId: String): Map<String, Any>? {
-        return getUserQuizResultsCollection(userId)
+    suspend fun getQuizResult(resultId: String): Map<String, Any>? {
+        return quizResultsCollection
             .document(resultId)
             .get()
             .await()
@@ -32,8 +30,9 @@ class FirebaseQuizResultsDb(
     }
 
     suspend fun getUserQuizResults(userId: String, limit: Int = 10): List<Map<String, Any>> {
-        return getUserQuizResultsCollection(userId)
-            .orderBy("completedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+        return quizResultsCollection
+            .whereEqualTo("userId", userId)
+            .orderBy("completedAt", Query.Direction.DESCENDING)
             .limit(limit.toLong())
             .get()
             .await()
@@ -41,8 +40,8 @@ class FirebaseQuizResultsDb(
             .mapNotNull { it.data }
     }
 
-    suspend fun deleteQuizResult(userId: String, resultId: String) {
-        getUserQuizResultsCollection(userId)
+    suspend fun deleteQuizResult(resultId: String) {
+        quizResultsCollection
             .document(resultId)
             .delete()
             .await()

@@ -5,6 +5,7 @@ import com.kwon.chosungmarket.data.mapper.QuizResultMapper
 import com.kwon.chosungmarket.domain.model.QuizResultData
 import com.kwon.chosungmarket.domain.repository.QuizResultRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
+import com.kwon.chosungmarket.domain.repository.UserRepositoryImpl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -15,14 +16,20 @@ import kotlinx.coroutines.flow.flow
  */
 class QuizResultRepository(
     private val firebaseQuizResultsDb: FirebaseQuizResultsDb,
-    private val sessionRepositoryImpl: SessionRepositoryImpl
+    private val sessionRepositoryImpl: SessionRepositoryImpl,
+    private val userRepositoryImpl: UserRepositoryImpl
 ) : QuizResultRepositoryImpl {
 
     /** 퀴즈 결과를 저장합니다. */
     override suspend fun saveQuizResult(quizResult: QuizResultData): Result<String> {
         return try {
             val resultData = QuizResultMapper.toFirestore(quizResult)
-            val resultId = firebaseQuizResultsDb.createQuizResult(quizResult.userId, resultData)
+            val resultId = firebaseQuizResultsDb.createQuizResult(resultData)
+
+            // 결과 저장 후 사용자의 결과 목록에 추가
+            userRepositoryImpl.addQuizResultToUser(quizResult.userId, resultId)
+                .getOrThrow()
+
             Result.success(resultId)
         } catch (e: Exception) {
             Result.failure(e)
@@ -35,7 +42,7 @@ class QuizResultRepository(
             val userId = sessionRepositoryImpl.getUserId().first()
                 ?: return Result.failure(Exception("User not logged in"))
 
-            val resultData = firebaseQuizResultsDb.getQuizResult(userId, resultId)
+            val resultData = firebaseQuizResultsDb.getQuizResult(resultId)
             val quizResult = resultData?.let { QuizResultMapper.fromFirestore(resultId, it) }
             Result.success(quizResult)
         } catch (e: Exception) {
@@ -65,7 +72,7 @@ class QuizResultRepository(
             val userId = sessionRepositoryImpl.getUserId().first()
                 ?: return Result.failure(Exception("User not logged in"))
 
-            firebaseQuizResultsDb.deleteQuizResult(userId, resultId)
+            firebaseQuizResultsDb.deleteQuizResult(resultId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

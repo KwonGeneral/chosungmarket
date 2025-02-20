@@ -16,12 +16,16 @@ import com.kwon.chosungmarket.common.types.QuizGroupStatus
  * @property updatedAt 수정 시간 (서버 타임스탬프)
  * @property userNickname 생성자 닉네임 (실시간 동기화 X)
  * @property status 퀴즈 그룹 상태 (ACTIVE, REPORTED, DELETED 등)
+ * @property image 퀴즈 그룹 이미지 URL
+ * @property tagList 퀴즈 그룹 태그 목록
  */
 data class QuizGroupData(
     val id: String,
     val userId: String,
     val title: String,
     val description: String,
+    val image: String = "",
+    val tagList: List<String> = emptyList(),
     val quizIdList: List<String>,
     val likeCount: Int = 0,
     val likedUserIdList: List<String> = emptyList(),
