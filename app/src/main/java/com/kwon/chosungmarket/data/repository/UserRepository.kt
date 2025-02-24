@@ -2,9 +2,12 @@ package com.kwon.chosungmarket.data.repository
 
 import com.google.firebase.firestore.FieldValue
 import com.kakao.sdk.user.UserApiClient
+import com.kwon.chosungmarket.data.db.FirebaseQuizResultsDb
 import com.kwon.chosungmarket.data.db.FirebaseUserDb
 import com.kwon.chosungmarket.data.db.SharedDataStore
+import com.kwon.chosungmarket.data.mapper.QuizResultMapper
 import com.kwon.chosungmarket.data.mapper.UserMapper
+import com.kwon.chosungmarket.domain.model.QuizResultData
 import com.kwon.chosungmarket.domain.model.UserData
 import com.kwon.chosungmarket.domain.repository.UserRepositoryImpl
 import kotlinx.coroutines.flow.Flow
@@ -155,6 +158,15 @@ class UserRepository(
         }
     }
 
+    /** 사용자의 포인트를 업데이트합니다. */
+    override suspend fun updateUserPoint(userId: String, pointToAdd: Int): Result<Unit> {
+        return try {
+            firebaseUserDb.updateUserPoint(userId, pointToAdd)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     /** 카카오 사용자 정보를 담는 데이터 클래스 */
     private data class KakaoUserInfo(

@@ -2,10 +2,14 @@ package com.kwon.chosungmarket.data.repository
 
 import com.kwon.chosungmarket.data.db.FirebaseQuizDb
 import com.kwon.chosungmarket.data.db.FirebaseQuizGroupsDb
+import com.kwon.chosungmarket.data.db.FirebaseQuizResultsDb
+import com.kwon.chosungmarket.data.db.FirebaseUserDb
 import com.kwon.chosungmarket.data.mapper.QuizGroupMapper
 import com.kwon.chosungmarket.data.mapper.QuizMapper
+import com.kwon.chosungmarket.data.mapper.QuizResultMapper
 import com.kwon.chosungmarket.domain.model.QuizData
 import com.kwon.chosungmarket.domain.model.QuizGroupData
+import com.kwon.chosungmarket.domain.model.QuizResultData
 import com.kwon.chosungmarket.domain.repository.QuizRepositoryImpl
 import com.kwon.chosungmarket.domain.repository.SessionRepositoryImpl
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +24,7 @@ import kotlinx.coroutines.flow.flow
 class QuizRepository(
     private val firebaseQuizDb: FirebaseQuizDb,
     private val firebaseQuizGroupsDb: FirebaseQuizGroupsDb,
-    private val sessionRepositoryImpl: SessionRepositoryImpl
+    private val sessionRepositoryImpl: SessionRepositoryImpl,
 ) : QuizRepositoryImpl {
 
     /** 새로운 퀴즈를 생성합니다. */
@@ -153,5 +157,4 @@ class QuizRepository(
             Result.failure(e)
         }
     }
-
 }

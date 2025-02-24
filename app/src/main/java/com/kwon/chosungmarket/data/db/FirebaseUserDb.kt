@@ -2,6 +2,7 @@ package com.kwon.chosungmarket.data.db
 
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -48,5 +49,24 @@ class FirebaseUserDb(
 
     fun getNewUserId(): String {
         return usersCollection.document().id
+    }
+
+    suspend fun getTopUsersByPoint(limit: Int): List<Map<String, Any>> {
+        return usersCollection
+            .orderBy("point", Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .get()
+            .await()
+            .documents
+            .mapNotNull { it.data?.plus("id" to it.id) }
+    }
+
+    suspend fun updateUserPoint(userId: String, pointToAdd: Int) {
+        val userDoc = usersCollection.document(userId)
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(userDoc)
+            val currentPoint = snapshot.getLong("point")?.toInt() ?: 0
+            transaction.update(userDoc, "point", currentPoint + pointToAdd)
+        }.await()
     }
 }

@@ -2,6 +2,7 @@ package com.kwon.chosungmarket.domain.repository
 
 import com.kwon.chosungmarket.common.types.MedalType
 import com.kwon.chosungmarket.domain.model.QuizGroupData
+import com.kwon.chosungmarket.domain.model.UserData
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -10,4 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface HallOfFameRepositoryImpl {
     /** 상위 랭킹 퀴즈 그룹 목록을 조회합니다. */
     fun getTopQuizGroupList(): Flow<List<QuizGroupData>>
+
+    /** 상위 랭킹 유저 목록을 조회합니다. */
+    fun getTopUserList(): Flow<List<UserData>>
 }

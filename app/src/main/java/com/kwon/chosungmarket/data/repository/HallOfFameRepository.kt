@@ -2,8 +2,11 @@ package com.kwon.chosungmarket.data.repository
 
 import com.kwon.chosungmarket.data.db.FirebaseHallOfFameDb
 import com.kwon.chosungmarket.data.db.FirebaseQuizGroupsDb
+import com.kwon.chosungmarket.data.db.FirebaseUserDb
 import com.kwon.chosungmarket.data.mapper.QuizGroupMapper
+import com.kwon.chosungmarket.data.mapper.UserMapper
 import com.kwon.chosungmarket.domain.model.QuizGroupData
+import com.kwon.chosungmarket.domain.model.UserData
 import com.kwon.chosungmarket.domain.repository.HallOfFameRepositoryImpl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -13,11 +16,13 @@ import kotlinx.coroutines.flow.flow
  */
 class HallOfFameRepository(
     private val firebaseHallOfFameDb: FirebaseHallOfFameDb,
-    private val firebaseQuizGroupsDb: FirebaseQuizGroupsDb
+    private val firebaseQuizGroupsDb: FirebaseQuizGroupsDb,
+    private val firebaseUserDb: FirebaseUserDb
 ) : HallOfFameRepositoryImpl {
 
     companion object {
-        private const val MIN_LIKES_FOR_RANKING = 0 // 순위에 들어가기 위한 최소 추천 수
+        private const val MIN_LIKES_FOR_RANKING = 0  // 순위에 들어가기 위한 최소 추천 수
+        private const val RANKING_LIMIT = 100  // 상위 랭킹 조회 제한
     }
 
     /** 상위 랭킹 퀴즈 그룹 목록을 조회합니다. */
@@ -40,6 +45,18 @@ class HallOfFameRepository(
             } ?: emptyList()
 
             emit(quizGroups)
+        } catch (e: Exception) {
+            emit(emptyList())
+        }
+    }
+
+    /** 상위 랭킹 사용자 목록을 조회합니다. */
+    override fun getTopUserList(): Flow<List<UserData>> = flow {
+        try {
+            val topUsers = firebaseUserDb.getTopUsersByPoint(RANKING_LIMIT)
+                .map { UserMapper.fromFirestore(it["id"] as String, it) }
+
+            emit(topUsers)
         } catch (e: Exception) {
             emit(emptyList())
         }

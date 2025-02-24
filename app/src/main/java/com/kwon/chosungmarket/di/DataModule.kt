@@ -41,8 +41,8 @@ val dataModule = module {
 
     // Repository 구현체들 제공
     single<UserRepositoryImpl> { UserRepository(get(), get()) }
+    single<HallOfFameRepositoryImpl> { HallOfFameRepository(get(), get(), get()) }
     single<QuizRepositoryImpl> { QuizRepository(get(), get(), get()) }
-    single<HallOfFameRepositoryImpl> { HallOfFameRepository(get(), get()) }
     single<PersistentStorageRepositoryImpl> { PersistentStorageRepository(get()) }
     single<SessionRepositoryImpl> { SessionRepository() }
     single<QuizResultRepositoryImpl> { QuizResultRepository(get(), get(), get()) }

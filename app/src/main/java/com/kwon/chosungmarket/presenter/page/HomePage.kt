@@ -306,27 +306,69 @@ private fun QuizGroupItem(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // 추천수
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = AppTheme.colors.RefColorRed95,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "❤️ ${quizGroup.likeCount}",
+                        style = AppTheme.styles.SubSmallR(),
+                        color = AppTheme.colors.RefColorRed50
+                    )
+                }
+            }
+
             Text(
                 text = quizGroup.title,
                 style = AppTheme.styles.BodySmallB(),
                 color = AppTheme.colors.CompColorTextPrimary
             )
 
+            // 작성자와 풀이 횟수
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "풀이 ${quizGroup.quizResultCount}회",
-                    style = AppTheme.styles.SubSmallR(),
-                    color = AppTheme.colors.CompColorTextDescription
-                )
-                Text(
                     text = "by ${quizGroup.userNickname}",
                     style = AppTheme.styles.SubSmallR(),
                     color = AppTheme.colors.CompColorTextDescription
                 )
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = AppTheme.colors.RefColorBlue95,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "도전 횟수는.. ",
+                            style = AppTheme.styles.SubSmallR(),
+                            color = AppTheme.colors.RefColorGray70
+                        )
+                        Text(
+                            text = "${quizGroup.quizResultCount}",
+                            style = AppTheme.styles.SubSmallR(),
+                            color = AppTheme.colors.RefColorBlue50
+                        )
+                    }
+                }
             }
 
             Row(

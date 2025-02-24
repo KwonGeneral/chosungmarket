@@ -31,29 +31,39 @@ class ProcessQuizResultUseCase(
             val userId = sessionRepositoryImpl.getUserId().first()
                 ?: return Result.failure(Exception("User not logged in"))
 
+            // 퀴즈 ID 목록 가져오기
             val quizIdList = quizRepositoryImpl.getQuizIdListByQuizGroup(quizGroupId)
                 .getOrElse { return Result.failure(it) }
 
-            val quizzes = quizRepositoryImpl.getQuizListByIdList(quizIdList).getOrThrow()
-            val score = calculateScore(quizzes.map { it.answer }, userAnswerList)
+            // 퀴즈 데이터 가져오기
+            val quizzes = quizRepositoryImpl.getQuizListByIdList(quizIdList)
+                .getOrElse { return Result.failure(it) }
+
+            // 정답 체크 및 점수 계산
+            val correctAnswers = quizzes.zip(userAnswerList).count { (quiz, answer) ->
+                quiz.answer.equals(answer, ignoreCase = true)
+            }
 
             val quizResult = QuizResultData(
                 id = UUID.randomUUID().toString(),
                 userId = userId,
                 quizGroupId = quizGroupId,
-                score = score,
+                score = ((correctAnswers.toFloat() / quizzes.size) * 100).toInt(),
                 answerList = userAnswerList,
-                status = ResultStatus.VERIFIED,
                 completedAt = System.currentTimeMillis()
             )
 
-            quizResultRepositoryImpl.saveQuizResult(quizResult)
-                .onSuccess { resultId ->
-                    // user의 quizResultIdList에 결과 ID 추가
-                    userRepositoryImpl.addQuizResultToUser(userId, resultId)
-                        .getOrThrow()
-                }
+            // 퀴즈 결과 저장
+            val resultId = quizResultRepositoryImpl.saveQuizResult(quizResult).getOrThrow()
 
+            // 유저 포인트 업데이트 (이전에 풀지 않은 퀴즈인 경우에만)
+            val userData = userRepositoryImpl.getCurrentUser().first()
+            if (userData != null && quizGroupId !in userData.quizResultIdList) {
+                userRepositoryImpl.updateUserPoint(userId, correctAnswers)
+                    .getOrThrow()
+            }
+
+            Result.success(resultId)
         } catch (e: Exception) {
             Result.failure(e)
         }

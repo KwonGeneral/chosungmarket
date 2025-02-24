@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.domain.repository
 
+import com.kwon.chosungmarket.domain.model.QuizResultData
 import com.kwon.chosungmarket.domain.model.UserData
 import kotlinx.coroutines.flow.Flow
 
@@ -32,4 +33,7 @@ interface UserRepositoryImpl {
 
     /** 사용자의 퀴즈 그룹 목록 제거 */
     suspend fun removeQuizGroupFromUser(userId: String, quizGroupId: String): Result<Unit>
+
+    /** 사용자의 포인트 업데이트 */
+    suspend fun updateUserPoint(userId: String, pointToAdd: Int): Result<Unit>
 }
