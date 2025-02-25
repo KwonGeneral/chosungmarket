@@ -22,6 +22,7 @@
             android:name=".presenter.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize|stateVisible"
             android:theme="@style/Theme.Chosungmarket">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

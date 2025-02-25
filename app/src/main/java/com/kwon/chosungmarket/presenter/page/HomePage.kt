@@ -12,35 +12,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,8 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,16 +55,12 @@ import com.kwon.chosungmarket.domain.model.UserData
 import com.kwon.chosungmarket.domain.usecase.GetCurrentUserInfoUseCase
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupListUseCase
 import com.kwon.chosungmarket.presenter.route.CmRouter
-import com.kwon.chosungmarket.presenter.route.navigateTo
-import com.kwon.chosungmarket.presenter.widget.FriendlyBody
-import com.kwon.chosungmarket.presenter.widget.FriendlyTitle
-import com.kwon.chosungmarket.presenter.widget.RoundedCard
+import com.kwon.chosungmarket.presenter.widget.dialogs.QuizDialog
 import com.kwon.chosungmarket.ui.theme.AppTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 
 /**
  * 앱의 메인 화면을 구성하는 Composable
@@ -80,12 +69,12 @@ import org.koin.androidx.compose.koinViewModel
  * @param modifier 레이아웃 수정을 위한 Modifier
  * @param viewModel 화면의 상태를 관리하는 ViewModel
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomePage(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: HomePageViewModel = koinViewModel()
+    viewModel: HomePageViewModel = org.koin.androidx.compose.koinViewModel()
 ) {
     val homeState by viewModel.homeState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -104,27 +93,15 @@ fun HomePage(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // 상단 헤더
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "홈",
-                        style = AppTheme.styles.TitleMediumB(),
-                        color = AppTheme.colors.CompColorTextPrimary
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppTheme.colors.RefColorWhite
-                )
-            )
-
             when (val state = homeState) {
                 is HomeState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = AppTheme.colors.RefColorBlue50)
+                        CircularProgressIndicator(
+                            color = AppTheme.colors.RefColorBlue50
+                        )
                     }
                 }
                 is HomeState.Success -> {
@@ -141,7 +118,7 @@ fun HomePage(
                         },
                         containerColor = AppTheme.colors.RefColorWhite,
                         divider = {
-                            HorizontalDivider(color = AppTheme.colors.CompColorLineSecondary)
+                            Divider(color = AppTheme.colors.CompColorLineSecondary.copy(alpha = 0.3f))
                         }
                     ) {
                         QuizTags.mainTags.forEach { tag ->
@@ -162,32 +139,70 @@ fun HomePage(
                         }
                     }
 
-                    // 필터 영역
+                    // 필터 영역 (버튼 형태로 변경)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilterDropdown(
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.List,
+                            contentDescription = "정렬 옵션",
+                            tint = AppTheme.colors.CompColorTextDescription,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        FilterButton(
                             selected = state.sortOption,
                             onOptionSelected = viewModel::updateSortOption
                         )
                     }
 
-                    // 퀴즈 그룹 목록
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(state.quizGroups) { quizGroup ->
-                            QuizGroupItem(
-                                quizGroup = quizGroup,
-                                onClick = {
-                                    navController.navigate(CmRouter.QuizDetail.createRoute(quizGroup.id))
-                                }
+                    // 구분선
+                    Divider(
+                        color = AppTheme.colors.CompColorLineSecondary.copy(alpha = 0.3f),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    if (state.quizGroups.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "퀴즈가 없습니다.\n새로운 퀴즈를 추가해보세요.",
+                                style = AppTheme.styles.BodySmallR(),
+                                color = AppTheme.colors.CompColorTextDescription,
+                                textAlign = TextAlign.Center
                             )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(0.dp) // 간격 제거
+                        ) {
+                            items(state.quizGroups.withIndex().toList()) { (index, quizGroup) ->
+                                QuizGroupItem(
+                                    quizGroup = quizGroup,
+                                    onClick = {
+                                        navController.navigate(CmRouter.QuizGame.createRoute(quizGroup.id))
+                                    }
+                                )
+
+                                // 마지막 항목이 아니면 구분선 추가
+                                if (index < state.quizGroups.size - 1) {
+                                    Divider(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        color = AppTheme.colors.CompColorLineSecondary.copy(alpha = 0.3f)
+                                    )
+                                }
+                            }
+
+                            // 하단 여백
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
                         }
                     }
                 }
@@ -228,45 +243,44 @@ fun HomePage(
 }
 
 /**
- * 필터 옵션을 선택하는 Dropdown을 표시하는 Composable
+ * 필터 옵션 버튼을 표시하는 Composable
  */
 @Composable
-private fun FilterDropdown(
+private fun FilterButton(
     selected: QuizSortOption,
     onOptionSelected: (QuizSortOption) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(AppTheme.colors.RefColorGray95)
-                .clickable { expanded = true }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = when (selected) {
-                    QuizSortOption.RECOMMENDED -> "추천순"
-                    QuizSortOption.NEWEST -> "최신순"
-                    QuizSortOption.OLDEST -> "오래된순"
-                },
-                style = AppTheme.styles.SubMediumR(),
-                color = AppTheme.colors.CompColorTextPrimary
-            )
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = null,
-                tint = AppTheme.colors.CompColorIconLabelPrimary
-            )
-        }
+    Row(
+        modifier = Modifier
+            .clickable { expanded = true }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = when (selected) {
+                QuizSortOption.RECOMMENDED -> "추천순"
+                QuizSortOption.NEWEST -> "최신순"
+                QuizSortOption.OLDEST -> "오래된순"
+            },
+            style = AppTheme.styles.BodySmallB(),
+            color = AppTheme.colors.RefColorBlue50
+        )
 
+        Icon(
+            imageVector = Icons.Default.ArrowDropDown,
+            contentDescription = null,
+            tint = AppTheme.colors.RefColorBlue50
+        )
+    }
+
+    if (expanded) {
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            QuizSortOption.values().forEach { option ->
+            QuizSortOption.entries.forEach { option ->
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -275,7 +289,7 @@ private fun FilterDropdown(
                                 QuizSortOption.NEWEST -> "최신순"
                                 QuizSortOption.OLDEST -> "오래된순"
                             },
-                            style = AppTheme.styles.SubMediumR()
+                            style = AppTheme.styles.BodySmallR()
                         )
                     },
                     onClick = {
@@ -288,36 +302,46 @@ private fun FilterDropdown(
     }
 }
 
+/**
+ * 퀴즈 그룹 아이템을 구성하는 Composable
+ * 카드 형태에서 구분선 형태로 변경됨
+ */
 @Composable
 private fun QuizGroupItem(
     quizGroup: QuizGroupData,
     onClick: () -> Unit
 ) {
-    Card(
+    var showQuizDialog by remember { mutableStateOf(false) }
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = AppTheme.colors.RefColorWhite
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .clickable { showQuizDialog = true }
+            .padding(vertical = 12.dp, horizontal = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        // 상단 이름과 좋아요 수
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 추천수
+            Text(
+                text = quizGroup.title,
+                style = AppTheme.styles.BodySmallB(),
+                color = AppTheme.colors.CompColorTextPrimary
+            )
+
+            // 좋아요 카운트
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
                         .background(
                             color = AppTheme.colors.RefColorRed95,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = CircleShape
                         )
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = "❤️ ${quizGroup.likeCount}",
@@ -326,70 +350,51 @@ private fun QuizGroupItem(
                     )
                 }
             }
+        }
 
+        // 작성자와 풀이 횟수
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = quizGroup.title,
-                style = AppTheme.styles.BodySmallB(),
-                color = AppTheme.colors.CompColorTextPrimary
+                text = "by ${quizGroup.userNickname}",
+                style = AppTheme.styles.SubSmallR(),
+                color = AppTheme.colors.CompColorTextDescription
             )
 
-            // 작성자와 풀이 횟수
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = AppTheme.colors.RefColorBlue95,
+                        shape = CircleShape
+                    )
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "by ${quizGroup.userNickname}",
+                    text = "도전 ${quizGroup.quizResultCount}회",
                     style = AppTheme.styles.SubSmallR(),
-                    color = AppTheme.colors.CompColorTextDescription
+                    color = AppTheme.colors.RefColorBlue50
                 )
-
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = AppTheme.colors.RefColorBlue95,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "도전 횟수는.. ",
-                            style = AppTheme.styles.SubSmallR(),
-                            color = AppTheme.colors.RefColorGray70
-                        )
-                        Text(
-                            text = "${quizGroup.quizResultCount}",
-                            style = AppTheme.styles.SubSmallR(),
-                            color = AppTheme.colors.RefColorBlue50
-                        )
-                    }
-                }
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                quizGroup.tagList.forEach { tag ->
-                    Surface(
-                        modifier = Modifier.height(24.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = AppTheme.colors.RefColorGray95
-                    ) {
-                        Text(
-                            text = tag,
-                            style = AppTheme.styles.SubSmallR(),
-                            color = AppTheme.colors.CompColorTextDescription,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
             }
         }
+    }
+
+    // 퀴즈 시작 다이얼로그
+    if (showQuizDialog) {
+        QuizDialog(
+            quizGroup = quizGroup,
+            onStart = {
+                onClick()
+                showQuizDialog = false
+            },
+            onDismiss = {
+                showQuizDialog = false
+            }
+        )
     }
 }
 
