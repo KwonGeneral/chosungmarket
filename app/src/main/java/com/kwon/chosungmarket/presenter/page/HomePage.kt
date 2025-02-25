@@ -504,7 +504,7 @@ sealed class HomeState {
         val quizGroups: List<QuizGroupData>,
         val mainTags: List<String>,
         val selectedTag: String = "전체",
-        val sortOption: QuizSortOption = QuizSortOption.RECOMMENDED
+        val sortOption: QuizSortOption = QuizSortOption.NEWEST
     ) : HomeState()
 
     /**
