@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.domain.usecase
 
+import com.kwon.chosungmarket.common.types.QuizSortOption
 import com.kwon.chosungmarket.domain.model.QuizGroupData
 import com.kwon.chosungmarket.domain.repository.QuizRepositoryImpl
 import kotlinx.coroutines.flow.Flow
@@ -18,26 +19,34 @@ class GetQuizGroupListUseCase(
      *
      * @param limit 가져올 개수
      * @param lastDocId 마지막 문서 ID
-     * @return 퀴즈 그룹 목록
+     * @param tag 퀴즈 그룹의 태그
+     * @param sortOption 정렬 옵션
      */
-    fun invoke(
+    suspend fun invoke(
         limit: Int = 10,
-        lastDocId: String? = null
+        lastDocId: String? = null,
+        tag: String? = null,
+        sortOption: QuizSortOption = QuizSortOption.RECOMMENDED
     ): Flow<List<QuizGroupData>> {
-        return quizRepositoryImpl.getQuizGroupList(limit, lastDocId)
+        return quizRepositoryImpl.getQuizGroupList(limit, lastDocId, tag, sortOption)
             .map { quizGroups ->
-                quizGroups.map { quizGroup ->
-                    // 각 퀴즈 그룹의 결과 카운트를 조회하여 추가
+                // 직접 정렬
+                val sortedGroups = when (sortOption) {
+                    QuizSortOption.RECOMMENDED -> quizGroups.sortedByDescending { it.likeCount }
+                    QuizSortOption.NEWEST -> quizGroups.sortedByDescending { it.createdAt }
+                    QuizSortOption.OLDEST -> quizGroups.sortedBy { it.createdAt }
+                }
+
+                // 나머지 처리
+                sortedGroups.map { quizGroup ->
                     val resultCount = getQuizResultCountUseCase.invoke(quizGroup.id)
                         .getOrDefault(0)
 
-                    // 새로운 퀴즈 그룹 데이터 생성 (quizResultCount 포함)
-                    quizGroup.copy(quizResultCount = resultCount, userNickname = quizGroup.userNickname.ifBlank { "익명" })
+                    quizGroup.copy(
+                        quizResultCount = resultCount,
+                        userNickname = quizGroup.userNickname.ifBlank { "익명" }
+                    )
                 }
-                    .sortedByDescending { it.createdAt }
-            }
-            .catch { e ->
-                emit(emptyList())
             }
     }
 }

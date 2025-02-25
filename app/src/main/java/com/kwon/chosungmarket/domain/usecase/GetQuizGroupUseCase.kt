@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.first
  */
 class GetQuizGroupUseCase(
     private val quizRepositoryImpl: QuizRepositoryImpl,
-    private val sessionRepositoryImpl: SessionRepositoryImpl,
-    private val getQuizResultCountUseCase: GetQuizResultCountUseCase
 ) {
     /**
      * 퀴즈 그룹을 가져옵니다.
@@ -21,27 +19,23 @@ class GetQuizGroupUseCase(
      * @return 퀴즈 그룹과 그룹에 속한 퀴즈 목록
      */
     suspend fun invoke(quizGroupId: String): Result<Pair<QuizGroupData, List<QuizData>>> {
-        val userId = sessionRepositoryImpl.getUserId().first()
-            ?: return Result.failure(Exception("User not logged in"))
-
         return try {
-            val quizGroup = quizRepositoryImpl.getQuizGroupList(limit = 1)
-                .first()
-                .find { it.id == quizGroupId }
-                ?: return Result.failure(Exception("퀴즈 그룹을 찾을 수 없습니다."))
+            // 퀴즈 그룹 조회
+            val quizGroup = quizRepositoryImpl.getQuizGroup(quizGroupId)
+                .getOrElse {
+                    return Result.failure(Exception("퀴즈 그룹을 찾을 수 없습니다."))
+                }
 
-            val quizzes = quizRepositoryImpl.getQuizListByIdList(quizGroup.quizIdList)
-                .getOrElse { return Result.failure(it) }
+            // 퀴즈 ID 목록으로 퀴즈들 조회
+            val quizIdList = quizGroup.quizIdList
+            val quizzes = quizRepositoryImpl.getQuizListByIdList(quizIdList)
+                .getOrElse {
+                    return Result.failure(Exception("퀴즈를 찾을 수 없습니다."))
+                }
 
-            // 결과 카운트 조회 및 추가
-            val resultCount = getQuizResultCountUseCase.invoke(quizGroupId)
-                .getOrDefault(0)
-
-            val updatedQuizGroup = quizGroup.copy(quizResultCount = resultCount, userNickname = quizGroup.userNickname.ifBlank { "익명" })
-
-            Result.success(updatedQuizGroup to quizzes)
+            Result.success(quizGroup to quizzes)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("퀴즈 조회 중 오류가 발생했습니다: ${e.message}"))
         }
     }
 }

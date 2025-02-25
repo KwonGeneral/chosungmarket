@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.domain.repository
 
+import com.kwon.chosungmarket.common.types.QuizSortOption
 import com.kwon.chosungmarket.domain.model.QuizData
 import com.kwon.chosungmarket.domain.model.QuizGroupData
 import kotlinx.coroutines.flow.Flow
@@ -22,10 +23,14 @@ interface QuizRepositoryImpl {
      *
      * @param limit 한 번에 가져올 항목 수
      * @param lastDocId 마지막으로 가져온 문서 ID (null이면 첫 페이지)
+     * @param tag 퀴즈 그룹의 태그 (null이면 전체)
+     * @param sortOption 정렬 옵션
      */
-    fun getQuizGroupList(
+    suspend fun getQuizGroupList(
         limit: Int = 10,
-        lastDocId: String? = null
+        lastDocId: String? = null,
+        tag: String? = null,
+        sortOption: QuizSortOption = QuizSortOption.RECOMMENDED
     ): Flow<List<QuizGroupData>>
 
     /** 새로운 퀴즈 그룹을 생성합니다. */

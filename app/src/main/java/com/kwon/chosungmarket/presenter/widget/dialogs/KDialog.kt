@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -107,9 +109,9 @@ fun KDialog(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         // 취소 버튼
-                        TextButton(
+                        OutlinedButton(
                             onClick = onDismiss,
-                            colors = ButtonDefaults.textButtonColors(
+                            colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = AppTheme.colors.CompColorTextDescription
                             ),
                             modifier = Modifier.weight(1f)
@@ -123,16 +125,17 @@ fun KDialog(
                         Spacer(modifier = Modifier.width(16.dp))
 
                         // 확인 버튼
-                        TextButton(
+                        Button(
                             onClick = onConfirm,
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = AppTheme.colors.CompColorBrand
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AppTheme.colors.CompColorBrand
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
                                 text = confirmButtonText,
-                                style = AppTheme.styles.BodySmallSB()
+                                style = AppTheme.styles.BodySmallSB(),
+                                color = AppTheme.colors.RefColorWhite
                             )
                         }
                     }

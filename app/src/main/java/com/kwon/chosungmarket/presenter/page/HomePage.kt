@@ -421,20 +421,29 @@ class HomePageViewModel(
 
     fun refresh() {
         _isRefreshing.value = true
-        loadData()
+
+        // 현재 상태의 정렬 옵션과 태그 유지
+        val currentState = _homeState.value as? HomeState.Success
+        val currentSortOption = currentState?.sortOption ?: QuizSortOption.NEWEST
+        val currentTag = currentState?.selectedTag ?: QuizTags.ALL
+
+        loadData(currentSortOption, currentTag)
     }
 
-    private fun loadData() {
+    private fun loadData(
+        sortOption: QuizSortOption = QuizSortOption.NEWEST,
+        selectedTag: String = QuizTags.ALL
+    ) {
         viewModelScope.launch {
             try {
-                val quizGroups = getQuizGroupListUseCase.invoke(10).first()
+                val quizGroups = getQuizGroupListUseCase.invoke(10, sortOption = sortOption).first()
                 val userData = getCurrentUserInfoUseCase.invoke().first()
 
                 _homeState.value = HomeState.Success(
                     user = userData,
                     quizGroups = quizGroups,
-                    selectedTag = QuizTags.ALL,
-                    sortOption = QuizSortOption.RECOMMENDED,
+                    selectedTag = selectedTag,  // 선택된 태그 유지
+                    sortOption = sortOption,  // 정렬 옵션 유지
                     mainTags = QuizTags.mainTags
                 )
             } catch (e: Exception) {
@@ -464,21 +473,24 @@ class HomePageViewModel(
     private fun filterAndSortQuizGroups() {
         viewModelScope.launch {
             val currentState = _homeState.value as? HomeState.Success ?: return@launch
-            val allQuizGroups = getQuizGroupListUseCase.invoke(10).first()
 
-            val filteredGroups = if (currentState.selectedTag == QuizTags.ALL) {
-                allQuizGroups
-            } else {
-                allQuizGroups.filter { it.tagList.contains(currentState.selectedTag) }
+            try {
+                _isRefreshing.value = true
+
+                // 태그와 정렬 옵션을 함께 적용하여 데이터 가져오기
+                val tag = if (currentState.selectedTag == QuizTags.ALL) null else currentState.selectedTag
+                val quizGroups = getQuizGroupListUseCase.invoke(
+                    10,
+                    tag = tag,
+                    sortOption = currentState.sortOption
+                ).first()
+
+                _homeState.value = currentState.copy(quizGroups = quizGroups)
+            } catch (e: Exception) {
+                // 오류 처리
+            } finally {
+                _isRefreshing.value = false
             }
-
-            val sortedGroups = when (currentState.sortOption) {
-                QuizSortOption.RECOMMENDED -> filteredGroups.sortedByDescending { it.likeCount }
-                QuizSortOption.NEWEST -> filteredGroups.sortedByDescending { it.createdAt }
-                QuizSortOption.OLDEST -> filteredGroups.sortedBy { it.createdAt }
-            }
-
-            _homeState.value = currentState.copy(quizGroups = sortedGroups)
         }
     }
 }

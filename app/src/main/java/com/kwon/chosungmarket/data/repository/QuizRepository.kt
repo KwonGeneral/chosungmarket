@@ -1,5 +1,6 @@
 package com.kwon.chosungmarket.data.repository
 
+import com.kwon.chosungmarket.common.types.QuizSortOption
 import com.kwon.chosungmarket.data.db.FirebaseQuizDb
 import com.kwon.chosungmarket.data.db.FirebaseQuizGroupsDb
 import com.kwon.chosungmarket.data.db.FirebaseQuizResultsDb
@@ -55,13 +56,26 @@ class QuizRepository(
      * @param limit 한 번에 가져올 항목 수
      * @param lastDocId 마지막으로 가져온 문서 ID (null이면 첫 페이지)
      */
-    override fun getQuizGroupList(limit: Int, lastDocId: String?): Flow<List<QuizGroupData>> = flow {
-        val quizGroups = firebaseQuizGroupsDb.getQuizGroups(limit, lastDocId)
+    override suspend fun getQuizGroupList(
+        limit: Int,
+        lastDocId: String?,
+        tag: String?,
+        sortOption: QuizSortOption
+    ): Flow<List<QuizGroupData>> = flow {
+        val quizGroups = firebaseQuizGroupsDb.getQuizGroups(
+            limit,
+            lastDocId,
+            tag,
+            sortOption
+        )
         val mappedQuizGroups = quizGroups.map { quizGroupData ->
-            QuizGroupMapper.fromFirestore(quizGroupData["id"] as String, quizGroupData)
+            QuizGroupMapper.fromFirestore(
+                quizGroupData["id"] as String,
+                quizGroupData
+            )
         }
         emit(mappedQuizGroups)
-    }.catch { e ->
+    }.catch {
         emit(emptyList())
     }
 

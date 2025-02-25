@@ -2,6 +2,8 @@ package com.kwon.chosungmarket.data.db
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.kwon.chosungmarket.common.types.QuizSortOption
+import com.kwon.chosungmarket.common.types.QuizTags
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -18,29 +20,52 @@ class FirebaseQuizGroupsDb(
     /**
      * 페이지네이션을 적용하여 퀴즈 그룹 목록을 조회합니다.
      * @param lastDocId 마지막으로 조회한 문서 ID (null이면 첫 페이지)
+     * @param tag 퀴즈 그룹의 태그 (null이면 전체)
+     * @param sortOption 정렬 옵션
      */
     suspend fun getQuizGroups(
         limit: Int = 10,
-        lastDocId: String? = null
+        lastDocId: String? = null,
+        tag: String? = null,
+        sortOption: QuizSortOption = QuizSortOption.RECOMMENDED
     ): List<Map<String, Any>> {
-        var query = quizGroupsCollection
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .limit(limit.toLong())
+        var query: Query = quizGroupsCollection
 
+        // 태그 필터링
+        if (tag != null && tag != QuizTags.ALL) {
+            query = query.whereArrayContains("tagList", tag)
+        }
+
+        // 정렬 옵션
+        when (sortOption) {
+            QuizSortOption.RECOMMENDED -> {
+                query = query.orderBy("likeCount", Query.Direction.DESCENDING)
+            }
+            QuizSortOption.NEWEST -> {
+                query = query.orderBy("createdAt", Query.Direction.DESCENDING)
+            }
+            QuizSortOption.OLDEST -> {
+                query = query.orderBy("createdAt", Query.Direction.ASCENDING)
+            }
+        }
+
+        // 페이지네이션
         if (lastDocId != null) {
-            val lastDoc = quizGroupsCollection
-                .document(lastDocId)
-                .get()
-                .await()
+            val lastDoc = quizGroupsCollection.document(lastDocId).get().await()
             query = query.startAfter(lastDoc)
         }
 
-        return query.get()
+        val result = query.limit(limit.toLong())
+            .get()
             .await()
             .documents
-            .mapNotNull {
-                it.data?.plus("id" to it.id)
+            .map { document ->
+                document.data?.toMutableMap()?.apply {
+                    this["id"] = document.id
+                } ?: mapOf()
             }
+
+        return result
     }
 
     /** 퀴즈 그룹을 생성합니다. */

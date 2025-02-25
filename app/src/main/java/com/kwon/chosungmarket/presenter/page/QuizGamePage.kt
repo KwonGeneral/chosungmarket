@@ -3,6 +3,7 @@ package com.kwon.chosungmarket.presenter.page
 import android.annotation.SuppressLint
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
@@ -62,6 +64,8 @@ import androidx.navigation.NavHostController
 import com.kwon.chosungmarket.domain.model.QuizData
 import com.kwon.chosungmarket.domain.usecase.GetQuizGroupUseCase
 import com.kwon.chosungmarket.domain.usecase.ProcessQuizResultUseCase
+import com.kwon.chosungmarket.presenter.route.CmRouter
+import com.kwon.chosungmarket.presenter.route.navigateTo
 import com.kwon.chosungmarket.presenter.widget.FriendlyBody
 import com.kwon.chosungmarket.presenter.widget.NextQuizDialog
 import com.kwon.chosungmarket.presenter.widget.dialogs.KDialog
@@ -95,6 +99,17 @@ fun QuizGamePage(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+
+    // 오류 발생 시 홈 화면으로 자동 이동
+    LaunchedEffect(uiState) {
+        if (uiState is QuizGameState.Error) {
+            val errorState = uiState as QuizGameState.Error
+            if (errorState.shouldNavigateHome) {
+                navController.navigateTo(CmRouter.Home.route)
+            }
+        }
+    }
+
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
     val userAnswerList by viewModel.userAnswerList.collectAsState()
     val quizzes by viewModel.quizzes.collectAsState()
@@ -117,6 +132,30 @@ fun QuizGamePage(
 
     // 다음 문제 확인 다이얼로그 상태
     var showNextDialog by remember { mutableStateOf(false) }
+
+    // 다이얼로그 상태
+    var isDialogVisible by remember { mutableStateOf(false) }
+
+    // 뒤로가기 및 X버튼 팝업 처리
+    BackHandler(enabled = true) {
+        when {
+            isDialogVisible -> {
+                // 다이얼로그가 보이는 상태에서는 다이얼로그만 닫기
+                isDialogVisible = false
+                showQuitDialog = false
+            }
+            showQuitDialog -> {
+                // 다이얼로그 상태 초기화
+                showQuitDialog = false
+                isDialogVisible = false
+            }
+            else -> {
+                // 일반적인 경우 퀴즈 포기 다이얼로그 표시
+                showQuitDialog = true
+                isDialogVisible = true
+            }
+        }
+    }
 
     when (val state = uiState) {
         is QuizGameState.Loading -> {
@@ -312,8 +351,17 @@ fun QuizGamePage(
                         message = "지금 포기하면 지금까지 입력한 정답은 저장되지 않습니다.",
                         confirmButtonText = "계속 풀기",
                         dismissButtonText = "포기하기",
-                        onConfirm = { showQuitDialog = false },
-                        onDismiss = { navController.popBackStack() }
+                        onConfirm = {
+                            showQuitDialog = false
+                            isDialogVisible = false
+                        },
+                        onDismiss = {
+                            navController.popBackStack()
+                        },
+                        properties = DialogProperties(
+                            dismissOnBackPress = false,  // 뒤로가기로 닫히지 않도록 설정
+                            dismissOnClickOutside = false
+                        )
                     )
                 }
 
@@ -343,7 +391,7 @@ fun QuizGamePage(
         }
         is QuizGameState.Submitted -> {
             LaunchedEffect(Unit) {
-                navController.navigate(com.kwon.chosungmarket.presenter.route.CmRouter.QuizResult.createRoute(state.resultId))
+                navController.navigateTo(CmRouter.QuizResult.createRoute(state.resultId))
             }
         }
     }
@@ -397,17 +445,23 @@ class QuizGameViewModel(
             try {
                 _uiState.value = QuizGameState.Loading
 
-                getQuizGroupUseCase.invoke(quizGroupId)
-                    .onSuccess { (quizGroup, quizzes) ->
-                        currentQuizGroupId = quizGroup.id
-                        _quizzes.value = quizzes
-                        _uiState.value = QuizGameState.Success(quizGroup.id)
-                    }
-                    .onFailure { error ->
-                        _uiState.value = QuizGameState.Error(error.localizedMessage ?: "알 수 없는 오류")
-                    }
+                val result = getQuizGroupUseCase.invoke(quizGroupId)
+
+                result.onSuccess { (quizGroup, quizzes) ->
+                    currentQuizGroupId = quizGroup.id
+                    _quizzes.value = quizzes
+                    _uiState.value = QuizGameState.Success(quizGroup.id)
+                }.onFailure { error ->
+                    _uiState.value = QuizGameState.Error(
+                        message = error.message ?: "알 수 없는 오류",
+                        shouldNavigateHome = true
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.value = QuizGameState.Error(e.localizedMessage ?: "알 수 없는 오류")
+                _uiState.value = QuizGameState.Error(
+                    message = e.localizedMessage ?: "알 수 없는 오류",
+                    shouldNavigateHome = true
+                )
             }
         }
     }
@@ -447,25 +501,25 @@ class QuizGameViewModel(
 
     /** 다음 문제로 이동합니다. */
     fun moveToNext() {
-        if (_currentQuestionIndex.value < _quizzes.value.size - 1) {
+        if (canMoveToNext()) {
             _currentQuestionIndex.value += 1
         }
     }
 
     /** 이전 문제로 이동합니다. */
     fun moveToPrevious() {
-        if (_currentQuestionIndex.value > 0) {
+        if (canMoveToPrevious()) {
             _currentQuestionIndex.value -= 1
         }
     }
 
     /** 다음 문제로 이동 가능한지 확인합니다. */
-    fun canMoveToNext(): Boolean {
+    private fun canMoveToNext(): Boolean {
         return _currentQuestionIndex.value < _quizzes.value.size - 1
     }
 
     /** 이전 문제로 이동 가능한지 확인합니다. */
-    fun canMoveToPrevious(): Boolean {
+    private fun canMoveToPrevious(): Boolean {
         return _currentQuestionIndex.value > 0
     }
 
@@ -497,6 +551,10 @@ sealed class QuizGameState {
     /**
      * 에러 상태
      * @param message 에러 메시지
+     * @param shouldNavigateHome 홈 화면으로 이동해야 하는지 여부
      */
-    data class Error(val message: String) : QuizGameState()
+    data class Error(
+        val message: String,
+        val shouldNavigateHome: Boolean = false
+    ) : QuizGameState()
 }
