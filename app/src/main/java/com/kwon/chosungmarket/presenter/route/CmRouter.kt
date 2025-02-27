@@ -17,9 +17,6 @@ sealed class CmRouter(val route: String) {
     data object QuizResult : CmRouter("/quiz/result/{quizId}") {
         fun createRoute(quizId: String) = "/quiz/result/$quizId"
     }
-    data object QuizDetail : CmRouter("/quiz/detail/{quizId}") {
-        fun createRoute(quizId: String) = "/quiz/detail/$quizId"
-    }
 
     data object QuizCreate : CmRouter("/quiz/create")
 
@@ -41,7 +38,6 @@ sealed class CmRouter(val route: String) {
                 route == QuizCreate.route -> QuizCreate
                 route.startsWith("/quiz/game/") -> QuizGame
                 route.startsWith("/quiz/result/") -> QuizResult
-                route.startsWith("/quiz/detail/") -> QuizDetail
                 else -> {
                     null
                 }

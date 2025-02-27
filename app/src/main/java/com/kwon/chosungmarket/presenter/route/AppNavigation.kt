@@ -15,7 +15,6 @@ import com.kwon.chosungmarket.presenter.page.LoginPage
 import com.kwon.chosungmarket.presenter.page.MyInfoPage
 import com.kwon.chosungmarket.presenter.page.NotificationPage
 import com.kwon.chosungmarket.presenter.page.QuizCreatePage
-import com.kwon.chosungmarket.presenter.page.QuizDetailPage
 import com.kwon.chosungmarket.presenter.page.QuizGamePage
 import com.kwon.chosungmarket.presenter.page.QuizResultPage
 import com.kwon.chosungmarket.presenter.page.SettingPage
@@ -58,13 +57,6 @@ fun AppNavigation(
         ) { backStackEntry ->
             val quizId = backStackEntry.arguments?.getString("quizId")
             QuizGamePage(navController, quizId)
-        }
-        composable(
-            route = CmRouter.QuizDetail.route,
-            arguments = listOf(navArgument("quizId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val quizId = backStackEntry.arguments?.getString("quizId")
-            QuizDetailPage(navController, quizId)
         }
         composable(
             route = CmRouter.QuizResult.route,
