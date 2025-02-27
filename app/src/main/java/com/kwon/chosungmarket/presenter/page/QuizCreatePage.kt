@@ -127,7 +127,8 @@ fun QuizCreatePage(
         } else {
             // 첫 단계에서는 취소 확인 다이얼로그 표시
             if (quizGroupTitle.isNotEmpty() || quizGroupDescription.isNotEmpty() ||
-                quizzes.any { it.consonant.isNotEmpty() || it.answer.isNotEmpty() || it.description.isNotEmpty() }) {
+                quizzes.any { it.consonant.isNotEmpty() || it.answer.isNotEmpty() || it.description.isNotEmpty() }
+            ) {
                 showExitDialog = true
             } else {
                 navController.popBackStack()
@@ -148,9 +149,11 @@ fun QuizCreatePage(
                     popUpTo(CmRouter.QuizCreate.route) { inclusive = true }
                 }
             }
+
             is QuizCreateState.Error -> {
                 KToast.show((createState as QuizCreateState.Error).message, ToastType.ERROR)
             }
+
             else -> {}
         }
     }
@@ -168,7 +171,7 @@ fun QuizCreatePage(
             if (validationResult.isSuccess) {
                 // 인덱스 범위 안전하게 처리
                 if (currentQuizIndex < quizzes.size) {
-                    // 이미 존재하는 다음 문제로 이동
+                    // 이미 존재하는 다음 퀴즈로 이동
                     currentQuizIndex++
                 } else {
                     // 새 퀴즈 추가 후 즉시 이동
@@ -177,7 +180,10 @@ fun QuizCreatePage(
                     currentQuizIndex++
                 }
             } else {
-                KToast.show(validationResult.exceptionOrNull()?.message ?: "입력 정보를 확인해주세요", ToastType.ERROR)
+                KToast.show(
+                    validationResult.exceptionOrNull()?.message ?: "입력 정보를 확인해주세요",
+                    ToastType.ERROR
+                )
             }
         } else {
             // 안전한 처리: 인덱스가 유효하지 않으면 첫 번째 퀴즈로 이동
@@ -221,7 +227,10 @@ fun QuizCreatePage(
                                     if (firstInvalidIndex == -1) {
                                         firstInvalidIndex = i
                                         // 첫 번째 오류 메시지 표시
-                                        KToast.show("문제 #${i + 1}: ${validationResult.exceptionOrNull()?.message ?: "입력 정보를 확인해주세요"}", ToastType.ERROR)
+                                        KToast.show(
+                                            "퀴즈 #${i + 1}: ${validationResult.exceptionOrNull()?.message ?: "입력 정보를 확인해주세요"}",
+                                            ToastType.ERROR
+                                        )
                                     }
                                 }
                             }
@@ -295,7 +304,8 @@ fun QuizCreatePage(
                 QuizEditSection(
                     quizIndex = currentQuizIndex - 1,
                     totalQuizzes = quizzes.size,
-                    quizForm = quizzes.getOrNull(currentQuizIndex - 1) ?: QuizFormData(), // null 안전 처리
+                    quizForm = quizzes.getOrNull(currentQuizIndex - 1)
+                        ?: QuizFormData(), // null 안전 처리
                     onQuizUpdate = {
                         // 인덱스 유효성 검사 추가
                         if (currentQuizIndex - 1 < quizzes.size) {
@@ -433,7 +443,7 @@ private fun validateQuiz(quizForm: QuizFormData): Result<Unit> {
         }
 
         if (normalizedConsonant != normalizedInputConsonant) {
-            return Result.failure(Exception("${i+1}번째 글자의 초성이 일치하지 않습니다"))
+            return Result.failure(Exception("${i + 1}번째 글자의 초성이 일치하지 않습니다"))
         }
     }
 
@@ -488,7 +498,12 @@ private fun QuizGroupInfoSection(
         OutlinedTextField(
             value = title,
             onValueChange = onTitleChange,
-            placeholder = { Text("재미있는 퀴즈 제목을 입력해주세요") },
+            placeholder = {
+                Text(
+                    "재미있는 퀴즈 제목을 입력해주세요",
+                    color = AppTheme.colors.CompColorTextDescription
+                )
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = AppTheme.colors.RefColorBlue50,
                 unfocusedBorderColor = AppTheme.colors.CompColorLineSecondary
@@ -508,7 +523,12 @@ private fun QuizGroupInfoSection(
         OutlinedTextField(
             value = description,
             onValueChange = onDescriptionChange,
-            placeholder = { Text("퀴즈에 대한 설명을 입력해주세요") },
+            placeholder = {
+                Text(
+                    "퀴즈에 대한 설명을 입력해주세요",
+                    color = AppTheme.colors.CompColorTextDescription
+                )
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = AppTheme.colors.RefColorBlue50,
                 unfocusedBorderColor = AppTheme.colors.CompColorLineSecondary
@@ -523,7 +543,7 @@ private fun QuizGroupInfoSection(
 
         // 다음 버튼
         RoundedButton(
-            text = "문제 만들기",
+            text = "퀴즈 만들기",
             color = AppTheme.colors.CompColorBrand,
             onClick = onNext,
             leadingIcon = {
@@ -563,8 +583,10 @@ private fun QuizEditSection(
 
     // 필드 유효성 검사
     val validateFields = {
-        consonantError = quizForm.consonant.isBlank() || !Regex("^[ㄱ-ㅎ]+$").matches(quizForm.consonant)
-        answerError = quizForm.answer.isBlank() || quizForm.consonant.length != quizForm.answer.length
+        consonantError =
+            quizForm.consonant.isBlank() || !Regex("^[ㄱ-ㅎ]+$").matches(quizForm.consonant)
+        answerError =
+            quizForm.answer.isBlank() || quizForm.consonant.length != quizForm.answer.length
         descriptionError = quizForm.description.isBlank()
     }
 
@@ -584,10 +606,12 @@ private fun QuizEditSection(
             if (sanitizedTag.isNotBlank()) {
                 val newTag = if (sanitizedTag.startsWith("#")) sanitizedTag else "#$sanitizedTag"
                 if (!quizForm.tagList.contains(newTag)) {
-                    onQuizUpdate(quizForm.copy(
-                        tagList = quizForm.tagList + newTag,
-                        tagInput = ""
-                    ))
+                    onQuizUpdate(
+                        quizForm.copy(
+                            tagList = quizForm.tagList + newTag,
+                            tagInput = ""
+                        )
+                    )
                 }
             } else {
                 // 특수문자만 있었던 경우 사용자에게 알림
@@ -661,7 +685,12 @@ private fun QuizEditSection(
                 consonantError = false // 입력 시 오류 상태 초기화
                 onQuizUpdate(quizForm.copy(consonant = it))
             },
-            placeholder = { Text("예: ㄱㅇㄱㅅ") },
+            placeholder = {
+                Text(
+                    "예: ㄱㅇㅈ",
+                    color = AppTheme.colors.CompColorTextDescription
+                )
+            },
             isError = consonantError,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = if (consonantError) AppTheme.colors.RefColorRed50 else AppTheme.colors.RefColorBlue50,
@@ -686,7 +715,12 @@ private fun QuizEditSection(
                 answerError = false // 입력 시 오류 상태 초기화
                 onQuizUpdate(quizForm.copy(answer = it))
             },
-            placeholder = { Text("예: 강아지") },
+            placeholder = {
+                Text(
+                    "예: 강아지",
+                    color = AppTheme.colors.CompColorTextDescription
+                )
+            },
             isError = answerError,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = if (answerError) AppTheme.colors.RefColorRed50 else AppTheme.colors.RefColorBlue50,
@@ -711,7 +745,12 @@ private fun QuizEditSection(
                 descriptionError = false // 입력 시 오류 상태 초기화
                 onQuizUpdate(quizForm.copy(description = it))
             },
-            placeholder = { Text("퀴즈 힌트를 입력해주세요") },
+            placeholder = {
+                Text(
+                    "퀴즈 힌트를 입력해주세요",
+                    color = AppTheme.colors.CompColorTextDescription
+                )
+            },
             isError = descriptionError,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = if (descriptionError) AppTheme.colors.RefColorRed50 else AppTheme.colors.RefColorBlue50,
@@ -763,7 +802,7 @@ private fun QuizEditSection(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = when(difficulty) {
+                            text = when (difficulty) {
                                 QuizDifficulty.EASY -> "쉬움"
                                 QuizDifficulty.MEDIUM -> "보통"
                                 QuizDifficulty.HARD -> "어려움"
@@ -797,7 +836,12 @@ private fun QuizEditSection(
             OutlinedTextField(
                 value = tagInput,
                 onValueChange = { tagInput = it },
-                placeholder = { Text("태그 입력 (예: 영화)") },
+                placeholder = {
+                    Text(
+                        "태그 입력 (예: 영화)",
+                        color = AppTheme.colors.CompColorTextDescription
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = AppTheme.colors.RefColorBlue50,
                     unfocusedBorderColor = AppTheme.colors.CompColorLineSecondary
@@ -868,25 +912,28 @@ private fun QuizEditSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "이 문제 삭제하기",
+                text = "이 퀴즈 삭제하기",
                 style = AppTheme.styles.BodySmallSB(),
                 color = AppTheme.colors.RefColorRed50
             )
         }
 
-        // 다음 문제 버튼
+        // 다음 퀴즈 버튼
         RoundedButton(
-            text = "다음 문제",
+            text = "다음 퀴즈",
             color = AppTheme.colors.CompColorBrand,
             onClick = {
                 // 먼저 유효성 검증
                 val validationResult = validateQuiz(quizForm)
                 if (validationResult.isSuccess) {
-                    // 성공 시 바로 다음 문제로 이동
+                    // 성공 시 바로 다음 퀴즈로 이동
                     onMoveToNext()
                 } else {
                     // 오류 메시지 표시
-                    KToast.show(validationResult.exceptionOrNull()?.message ?: "입력 정보를 확인해주세요", ToastType.ERROR)
+                    KToast.show(
+                        validationResult.exceptionOrNull()?.message ?: "입력 정보를 확인해주세요",
+                        ToastType.ERROR
+                    )
 
                     // 오류 상태 설정
                     validateFields()
@@ -895,7 +942,9 @@ private fun QuizEditSection(
                     val errorMessage = validationResult.exceptionOrNull()?.message ?: ""
                     when {
                         errorMessage.contains("초성") -> consonantError = true
-                        errorMessage.contains("정답") || errorMessage.contains("글자") -> answerError = true
+                        errorMessage.contains("정답") || errorMessage.contains("글자") -> answerError =
+                            true
+
                         errorMessage.contains("힌트") -> descriptionError = true
                     }
                 }
@@ -1051,7 +1100,8 @@ class QuizCreateViewModel(
                 quizzes.forEachIndexed { index, quiz ->
                     val validationResult = validateQuiz(quiz)
                     if (validationResult.isFailure) {
-                        _createState.value = QuizCreateState.Error("문제 #${index + 1}: ${validationResult.exceptionOrNull()?.message}")
+                        _createState.value =
+                            QuizCreateState.Error("퀴즈 #${index + 1}: ${validationResult.exceptionOrNull()?.message}")
                         return@launch
                     }
                 }
@@ -1102,7 +1152,7 @@ class QuizCreateViewModel(
 /**
  * 퀴즈 폼의 데이터를 담는 데이터 클래스
  *
- * @param consonant 초성 문제
+ * @param consonant 초성 퀴즈
  * @param answer 정답
  * @param description 힌트 또는 설명
  * @param tagList 태그 목록
